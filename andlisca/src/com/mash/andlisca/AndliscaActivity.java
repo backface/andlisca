@@ -83,7 +83,7 @@ public class AndliscaActivity extends Activity {
         if (mResolutions != null) {
         	Menu resolutionMenu = menu.addSubMenu("Resolution");
         	for (Camera.Size size : mResolutions) {
-        		mItemResolutions.add(resolutionMenu.add(size.width + "x" + size.height));
+        		mItemResolutions.add(resolutionMenu.add(size.width + "p"));
         	} 
         }
         return true;
