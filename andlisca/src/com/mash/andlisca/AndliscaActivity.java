@@ -5,7 +5,6 @@ import java.util.List;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -15,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class AndliscaActivity extends Activity {
@@ -34,10 +32,10 @@ public class AndliscaActivity extends Activity {
     private MenuItem			mItemSize2px;
     private MenuItem			mItemSize3px;
     private MenuItem			mItemSize4px;
-    private MenuItem			mItemSize5px;
-    private MenuItem			mItemFPSToggle; 
+    private MenuItem			mItemSize5px;    
     private MenuItem			mItemAbout;
-   
+    //private MenuItem			mItemFPSToggle;
+    
     private List<MenuItem>		mItemResolutions;
     private List<Camera.Size>	mResolutions; 
     

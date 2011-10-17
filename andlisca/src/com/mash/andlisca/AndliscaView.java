@@ -8,8 +8,6 @@ import java.util.Date;
 
 import org.opencv.android.Utils;
 import org.opencv.core.*;
-import org.opencv.highgui.Highgui;
-import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 import android.content.Context;
 import android.graphics.Bitmap;

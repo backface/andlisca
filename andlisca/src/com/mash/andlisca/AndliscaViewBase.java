@@ -28,9 +28,11 @@ public abstract class AndliscaViewBase
     private byte[]              mFrame;
     private boolean             mThreadRun;
     private FpsMeter            mFps;
+    //private String			mfocusMode;
+    
     private List<String>		mFocusModes;
-    private String				mfocusMode;
     private List<Camera.Size> 	mResolutions;
+    
     protected static boolean 	mResolutionChanged=false;
     private boolean 			showFPS = false;
     
