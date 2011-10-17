@@ -23,8 +23,8 @@ public abstract class AndliscaViewBase
 
     private static Camera		mCamera;
     private SurfaceHolder       mHolder;
-    private static int                 mFrameWidth;
-    private static int                 mFrameHeight;
+    private static int         	mFrameWidth;
+    private static int          mFrameHeight;
     private byte[]              mFrame;
     private boolean             mThreadRun;
     private FpsMeter            mFps;
@@ -32,6 +32,7 @@ public abstract class AndliscaViewBase
     private String				mfocusMode;
     private List<Camera.Size> 	mResolutions;
     protected static boolean 	mResolutionChanged=false;
+    private boolean 			showFPS = false;
     
 
     public AndliscaViewBase(Context context) {
@@ -103,6 +104,13 @@ public abstract class AndliscaViewBase
         });    	
     	mCamera.startPreview();
     }        
+    
+    public void toggleFPSDisplay() {
+    	if (showFPS == true) 
+    		showFPS = false;
+    	else
+    		showFPS = true;
+    }    
     
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
         Log.i(TAG, "surfaceCreated");
@@ -214,13 +222,14 @@ public abstract class AndliscaViewBase
                 if (canvas != null) {
                 	canvas.drawColor(Color.BLACK);
                 	canvas.rotate(90, canvas.getWidth()/2, canvas.getHeight()/2);
-                	canvas.drawBitmap(bmp, (canvas.getWidth() - getFrameWidth()) / 2, (canvas.getHeight() - getFrameHeight()) / 2, null);                                        
-                	canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);
-                    mFps.draw(canvas, canvas.getWidth()/2+20, canvas.getHeight()-25);
-                    mHolder.unlockCanvasAndPost(canvas); 
+                	canvas.drawBitmap(bmp, (canvas.getWidth() - getFrameWidth()) / 2, (canvas.getHeight() - getFrameHeight()) / 2, null);
+                	canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);            		
+                	mFps.draw(canvas, canvas.getWidth()/2+20, canvas.getHeight()-25);
+                	mHolder.unlockCanvasAndPost(canvas); 
                 }
                 bmp.recycle();
             }
         }
     }
+    
 }
