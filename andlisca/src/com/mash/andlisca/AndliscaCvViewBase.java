@@ -5,11 +5,9 @@ import java.util.List;
 import org.opencv.core.Size;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.highgui.Highgui;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -19,7 +17,6 @@ public abstract class AndliscaCvViewBase extends SurfaceView implements SurfaceH
 
     private SurfaceHolder       mHolder;
     private VideoCapture        mCvCamera;
-    private Camera              mCamera;
     private FpsMeter            mFps;
     private int                 mFrameWidth;
     private int                 mFrameHeight;    
