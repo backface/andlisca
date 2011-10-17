@@ -5,9 +5,11 @@ import java.util.List;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -28,16 +30,16 @@ public class AndliscaActivity extends Activity {
     private MenuItem			mItemFocusInfinity;
     private MenuItem			mItemFocusFixed;
     private MenuItem			mItemFocusEdof;
-    private MenuItem			mItemSize1px;
-    private MenuItem			mItemSize2px;
-    private MenuItem			mItemSize3px;
-    private MenuItem			mItemSize4px;
-    private MenuItem			mItemSize5px;    
-    private MenuItem			mItemAbout;
-    //private MenuItem			mItemFPSToggle;
+    private MenuItem			mItemInfo;
     
     private List<MenuItem>		mItemResolutions;
+    private List<MenuItem>		mItemSizes;
     private List<Camera.Size>	mResolutions; 
+    
+    private PowerManager mPm;
+    private PowerManager.WakeLock mWakeLock;
+    private Context mContext;
+        
     
     private static final int 	DIALOG_INFO=0;
           
@@ -49,19 +51,43 @@ public class AndliscaActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
+        
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         mView = new AndliscaView(this);
         setContentView(mView);
         registerForContextMenu(mView);
+        
+        mContext = getApplicationContext();
+        mPm = (PowerManager) getSystemService(mContext.POWER_SERVICE);
+        mWakeLock = mPm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "DoNotDim");
+        mWakeLock.acquire();        
     }
+    
+    @Override
+    protected void onPause() {
+    	super.onPause();
+    	mWakeLock.release();
+    }
+    
+    @Override
+    protected void onResume() {
+    	super.onResume();
+    	mWakeLock.acquire();
+    }    
+
+    @Override
+    protected void onDestroy() {
+    	mWakeLock.release();
+    	super.onResume();    	
+    }    
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.i(TAG, "onCreateOptionsMenu");        
         mItemSave = menu.add("Save");
         mItemClear = menu.add("Clear");
-        mItemAbout = menu.add("Info");         
+        mItemInfo = menu.add("Info");         
         return true;
     }
  
@@ -83,20 +109,11 @@ public class AndliscaActivity extends Activity {
         	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED); 
         else if (item == mItemFocusEdof)
         	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_EDOF); 
-        else if (item == mItemSize1px)
-        	mView.setLineHeight(1); 
-        else if (item == mItemSize2px)
-        	mView.setLineHeight(2);
-        else if (item == mItemSize3px)
-        	mView.setLineHeight(3);
-        else if (item == mItemSize4px)
-        	mView.setLineHeight(4);        
-        else if (item == mItemSize5px)
-        	mView.setLineHeight(5);  
         else if (mResolutions != null) {
         	if (mItemResolutions.contains(item))
         		mView.setResolution(mResolutions.get(mItemResolutions.indexOf(item))); 
-    	} else if (item == mItemAbout) {
+    	} else if (item == mItemInfo) {
+    		Log.i(TAG,"ABOUT");
     		showDialog(DIALOG_INFO);
     	}        
         return true;
@@ -123,13 +140,12 @@ public class AndliscaActivity extends Activity {
 	        		mItemFocusEdof= focusMenu.add("EDOF");
         }
         
+        mItemSizes = new ArrayList<MenuItem>();
         Menu sizeMenu = menu.addSubMenu("Line size");
-        mItemSize1px = sizeMenu.add("1px");
-        mItemSize2px = sizeMenu.add("2px");
-        mItemSize3px = sizeMenu.add("3px");
-        mItemSize4px = sizeMenu.add("4px");
-        mItemSize5px = sizeMenu.add("5px");
-                
+        for (int i=1; i<=5; i++) {
+    		mItemSizes.add(sizeMenu.add(i + "px"));
+    	}               
+        
         mResolutions = mView.getResolutions();
         mItemResolutions = new ArrayList<MenuItem>();
         if (mResolutions != null) {
@@ -138,7 +154,6 @@ public class AndliscaActivity extends Activity {
         		mItemResolutions.add(resolutionMenu.add(size.width + "p"));
         	} 
         }   
-        //mItemFPSToggle = menu.add("Show/Hide FPS");
     }
  
     @Override
@@ -154,7 +169,7 @@ public class AndliscaActivity extends Activity {
         			)
             	   .setTitle("Info")
         	       .setCancelable(true)
-        	       .setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+        	       .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
         	           public void onClick(DialogInterface dialog, int id) {
         	                dialog.cancel();
         	           }
@@ -195,23 +210,12 @@ public class AndliscaActivity extends Activity {
         	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED); 
         else if (item == mItemFocusEdof)
         	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_EDOF); 
-        else if (item == mItemSize1px)
-        	mView.setLineHeight(1); 
-        else if (item == mItemSize2px)
-        	mView.setLineHeight(2);
-        else if (item == mItemSize3px)
-        	mView.setLineHeight(3);
-        else if (item == mItemSize4px)
-        	mView.setLineHeight(4);        
-        else if (item == mItemSize5px)
-        	mView.setLineHeight(5);  
-        else if (mResolutions != null) {
+        else if (mItemSizes.contains(item)) {
+        		mView.setLineHeight(mItemSizes.indexOf(item)+1); 
+        } else if (mResolutions != null) {
         	if (mItemResolutions.contains(item))
         		mView.setResolution(mResolutions.get(mItemResolutions.indexOf(item))); 
         }
-        /*} else if (item == mItemFPSToggle) {
-        	mView.toggleFPSDisplay();
-        }*/
         return true;
     }
     
