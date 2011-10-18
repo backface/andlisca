@@ -126,6 +126,7 @@ public class AndliscaActivity extends Activity {
     public void onCreateContextMenu(
     		ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) 
     {
+    	menu.setHeaderTitle("Settings");
         if (mView.getFocusModes() != null) {
         	Menu focusMenu = menu.addSubMenu("Focus modes");
         	Log.i(TAG,"modes "+ mView.getFocusModes());
