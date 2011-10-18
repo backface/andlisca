@@ -10,7 +10,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.hardware.Camera;
+import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.PreviewCallback;
+import android.os.Build;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -25,9 +27,17 @@ public abstract class AndliscaViewBase
     private SurfaceHolder       mHolder;
     private static int         	mFrameWidth;
     private static int          mFrameHeight;
+    private int         		mCanvasWidth;
+    private int          		mCanvasHeight;
+    
     private byte[]              mFrame;
     private boolean             mThreadRun;
     private FpsMeter            mFps;
+    private int            		mNumberOfCameras=1;
+    private int            		mDefaultCameraId;
+    private int            		mCameraId;
+    private int            		mFrontCameraId;
+    private int            		mBackCameraId;
     //private String			mfocusMode;
     
     private List<String>		mFocusModes;
@@ -35,6 +45,7 @@ public abstract class AndliscaViewBase
     
     protected static boolean 	mResolutionChanged=false;
     private boolean 			showFPS = false;
+    private boolean 			mHasMultipleCameras = false;
     
 
     public AndliscaViewBase(Context context) {
@@ -43,6 +54,7 @@ public abstract class AndliscaViewBase
         mHolder.addCallback(this);
         mFps = new FpsMeter();        
         Log.i(TAG, "Instantiated new  " + this.getClass());
+        Log.i(TAG, "Android version  " + Build.VERSION.SDK_INT);
     }
 
     public int getFrameWidth() {
@@ -54,9 +66,8 @@ public abstract class AndliscaViewBase
     }
 
     public List<String> getFocusModes() {
-        return mFocusModes;
-    }
-    
+        return mCamera.getParameters().getSupportedFocusModes();
+    }    
 
     public String getFocusMode() {
         return mCamera.getParameters().getFocusMode();
@@ -92,8 +103,10 @@ public abstract class AndliscaViewBase
     	Camera.Parameters params = mCamera.getParameters();
     	mFrameWidth = size.width;
         mFrameHeight = size.height;    	
+        
     	params.setPreviewSize(getFrameWidth(), getFrameHeight());
     	mCamera.setParameters(params);
+    	Log.i(TAG, "setting resolution: " + getFrameWidth() + "x" + getFrameHeight());  
     	mResolutionChanged = true;
     	
     	mCamera.setPreviewCallback(new PreviewCallback() {
@@ -105,7 +118,51 @@ public abstract class AndliscaViewBase
             }
         });    	
     	mCamera.startPreview();
-    }        
+    } 
+ 
+    protected boolean isFrontCamera() { 
+    	if (Build.VERSION.SDK_INT < 9)
+    		return false;
+    	else
+    		return mCameraId == mFrontCameraId;
+    }
+    public void setCamera(String type) {
+    	if (Build.VERSION.SDK_INT>=9) {
+        	mCamera.stopPreview();
+            mCamera.setPreviewCallback(null);
+            mCamera.release();
+            
+        	if (type == "front") {
+        		Log.i(TAG, "open front facing camera:");        		
+        		mCamera = Camera.open(mFrontCameraId);
+        		Camera.Parameters params = mCamera.getParameters();
+        		params.setRotation(0);
+        		mCamera.setParameters(params);
+        		mCameraId = mFrontCameraId;
+        	} else  {
+        		Log.i(TAG, "open back facing camera:");
+        		mCamera = Camera.open(mBackCameraId);
+        		Camera.Parameters params = mCamera.getParameters();
+        		params.setRotation(90);
+        		mCamera.setParameters(params);
+        		mCameraId = mBackCameraId;
+        	}
+        	Log.i(TAG, "fcous modes:" + mCamera.getParameters().getFocusMode());
+        	
+        	setBestResolution();
+    		mResolutionChanged = true;
+    	
+    		mCamera.setPreviewCallback(new PreviewCallback() {
+    			public void onPreviewFrame(byte[] data, Camera camera) {
+    				synchronized (AndliscaViewBase.this) {
+    					mFrame = data;
+    					AndliscaViewBase.this.notify();
+    				}
+    			}
+    		});    	
+    		mCamera.startPreview();
+    	}
+    }    
     
     public void toggleFPSDisplay() {
     	if (showFPS == true) 
@@ -114,53 +171,50 @@ public abstract class AndliscaViewBase
     		showFPS = true;
     }    
     
+    public void setBestResolution() {	
+    	Camera.Parameters params = mCamera.getParameters();
+        mResolutions = params.getSupportedPreviewSizes();
+                           
+        Log.i(TAG, "available resolutions:");
+        // selecting optimal camera preview size
+        {
+            double minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : mResolutions) {
+                if (Math.abs(size.height - mCanvasHeight) < minDiff) {
+                    mFrameWidth = size.width;
+                    mFrameHeight = size.height;
+                    minDiff = Math.abs(size.height - mCanvasHeight);
+                }                    
+                Log.i(TAG, size.width + "x" + size.height);
+            }
+        }
+        
+        params.setPreviewSize(getFrameWidth(), getFrameHeight()); 
+        mCamera.setParameters(params);
+        Log.i(TAG, "setting resolution: " + getFrameWidth() + "x" + getFrameHeight());  	
+    }
+    
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
         Log.i(TAG, "surfaceCreated");
         if (mCamera != null) {
-            Camera.Parameters params = mCamera.getParameters();
-            mResolutions = params.getSupportedPreviewSizes();
             mFrameWidth = width;
             mFrameHeight = height;
-            
-            /*
-            Log.i(TAG, "available cameras:");
-            mCamera.getNumberOfCameras();
+            mCanvasWidth = width;
+            mCanvasHeight = height;
 
-            // Find the ID of the default camera
-            CameraInfo cameraInfo = new CameraInfo();
-                for (int i = 0; i < numberOfCameras; i++) {
-                    Camera.getCameraInfo(i, cameraInfo);
-                    if (cameraInfo.facing == CameraInfo.CAMERA_FACING_BACK) {
-                        defaultCameraId = i;
-                    }
-            }   */         
-
-            Log.i(TAG, "available resolutions:");
-            // selecting optimal camera preview size
-            {
-                double minDiff = Double.MAX_VALUE;
-                for (Camera.Size size : mResolutions) {
-                    if (Math.abs(size.height - height) < minDiff) {
-                        mFrameWidth = size.width;
-                        mFrameHeight = size.height;
-                        minDiff = Math.abs(size.height - height);
-                    }                    
-                    Log.i(TAG, size.width + "x" + size.height);
-                }
-            }
-            
-            params.setPreviewSize(getFrameWidth(), getFrameHeight());            
-            Log.i(TAG, "setting resolution: " + getFrameWidth() + "x" + getFrameHeight());            
+            //choose resolution that fits screen
+            setBestResolution();
             
             // ask for focus modes
+            Camera.Parameters params = mCamera.getParameters();
             mFocusModes = params.getSupportedFocusModes();
             Log.i(TAG, "available focus modes: " + mFocusModes);                      
 
             // fix portrait setting
             params.set("orientation", "portrait");
-            params.setRotation(90);
-                        
+            params.setRotation(90);                        
             mCamera.setParameters(params);
+            
             try {
 				mCamera.setPreviewDisplay(null);
 			} catch (IOException e) {
@@ -170,9 +224,33 @@ public abstract class AndliscaViewBase
         }
     }
 
-    public void surfaceCreated(SurfaceHolder holder) {
-        Log.i(TAG, "surfaceCreated");
-        mCamera = Camera.open();
+    public void surfaceCreated(SurfaceHolder holder) {   
+    	if (Build.VERSION.SDK_INT>=9) {
+    		mDefaultCameraId = 0;
+    		
+        	Log.i(TAG, "available cameras:");
+        	mNumberOfCameras = Camera.getNumberOfCameras();
+        	Log.i(TAG, "Found " + mNumberOfCameras + " cameras.");
+        	if (mNumberOfCameras > 0) {
+        		mHasMultipleCameras = true;
+        		// Find the ID of the default camera
+        		CameraInfo cameraInfo = new CameraInfo();
+        		for (int i = 0; i < mNumberOfCameras; i++) {
+        			Camera.getCameraInfo(i, cameraInfo);
+        			Log.i(TAG, "info " + cameraInfo.toString());
+        			if (cameraInfo.facing == CameraInfo.CAMERA_FACING_BACK) {
+        				mDefaultCameraId = i;
+        				mBackCameraId = i;
+        				mCameraId = i;
+        			} else if (cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT) {
+        				mFrontCameraId = i;
+        			}
+        		}        		
+        	}
+        	mCamera = Camera.open(mDefaultCameraId); 
+        } else {
+        	mCamera = Camera.open();
+        }
         mCamera.setPreviewCallback(new PreviewCallback() {
             public void onPreviewFrame(byte[] data, Camera camera) {
                 synchronized (AndliscaViewBase.this) {
@@ -181,6 +259,9 @@ public abstract class AndliscaViewBase
                 }
             }
         });
+        Log.i(TAG, "surfaceCreated");
+        
+        
         (new Thread(this)).start();
     }
 
@@ -223,10 +304,25 @@ public abstract class AndliscaViewBase
                 Canvas canvas = mHolder.lockCanvas();
                 if (canvas != null) {
                 	canvas.drawColor(Color.BLACK);
-                	canvas.rotate(90, canvas.getWidth()/2, canvas.getHeight()/2);
-                	canvas.drawBitmap(bmp, (canvas.getWidth() - getFrameWidth()) / 2, (canvas.getHeight() - getFrameHeight()) / 2, null);
-                	canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);            		
                 	mFps.draw(canvas, canvas.getWidth()/2+20, canvas.getHeight()-25);
+                	
+                	if(isFrontCamera())  {
+                		canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);
+                		canvas.scale(1,-1,canvas.getWidth()/2, canvas.getHeight()/2);
+                	} else {
+                		canvas.rotate(90, canvas.getWidth()/2, canvas.getHeight()/2);
+            		}
+                	
+                	canvas.drawBitmap(bmp, (canvas.getWidth() - getFrameWidth()) / 2, (canvas.getHeight() - getFrameHeight()) / 2, null);
+                	
+                	if(isFrontCamera()) {                		
+                		canvas.scale(1,-1,canvas.getWidth()/2, canvas.getHeight()/2);
+                		canvas.rotate(90, canvas.getWidth()/2, canvas.getHeight()/2);
+                	} else { 
+                		canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);
+                	}
+                	
+                	
                 	mHolder.unlockCanvasAndPost(canvas); 
                 }
                 bmp.recycle();
@@ -234,4 +330,9 @@ public abstract class AndliscaViewBase
         }
     }
     
+    public boolean hasMultipleCameras() {
+    	return mHasMultipleCameras;
+    }
+    
+
 }

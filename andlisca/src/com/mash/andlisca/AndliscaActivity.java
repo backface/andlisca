@@ -8,6 +8,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.hardware.Camera;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
@@ -30,15 +31,16 @@ public class AndliscaActivity extends Activity {
     private MenuItem			mItemFocusInfinity;
     private MenuItem			mItemFocusFixed;
     private MenuItem			mItemFocusEdof;
-    private MenuItem			mItemInfo;
+    private MenuItem	 		mItemFocusContinuous;   
+    private MenuItem			mItemInfo;    
+    private MenuItem	 		mItemFrontCamera;
+    private MenuItem	 		mItemBackCamera;
     
     private List<MenuItem>		mItemResolutions;
     private List<MenuItem>		mItemSizes;
     private List<Camera.Size>	mResolutions; 
     
-    private PowerManager mPm;
     private PowerManager.WakeLock mWakeLock;
-    private Context mContext;
         
     
     private static final int 	DIALOG_INFO=0;
@@ -58,9 +60,8 @@ public class AndliscaActivity extends Activity {
         setContentView(mView);
         registerForContextMenu(mView);
         
-        mContext = getApplicationContext();
-        mPm = (PowerManager) getSystemService(mContext.POWER_SERVICE);
-        mWakeLock = mPm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "DoNotDim");
+        final PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        mWakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "DoNotDim");
         mWakeLock.acquire();        
     }
     
@@ -96,10 +97,9 @@ public class AndliscaActivity extends Activity {
         Log.i(TAG, "Menu Item selected " + item);
         if (item == mItemSave) {
         	Toast.makeText(this,mView.saveBitmap(), Toast.LENGTH_SHORT).show();
-        }
-        else if (item == mItemClear)
+        } else if (item == mItemClear)
         	mView.clearImage();          
-        else if (item == mItemFocusAuto)
+        /* else if (item == mItemFocusAuto)
         	mView.AutofocusNow();          
         else if (item == mItemFocusMacro)
         	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO); 
@@ -112,7 +112,8 @@ public class AndliscaActivity extends Activity {
         else if (mResolutions != null) {
         	if (mItemResolutions.contains(item))
         		mView.setResolution(mResolutions.get(mItemResolutions.indexOf(item))); 
-    	} else if (item == mItemInfo) {
+        */
+    	else if (item == mItemInfo) {
     		Log.i(TAG,"ABOUT");
     		showDialog(DIALOG_INFO);
     	}        
@@ -134,10 +135,18 @@ public class AndliscaActivity extends Activity {
 	        	mItemFocusFixed = focusMenu.add("Fixed");
 	        if (mView.getFocusModes().contains(Camera.Parameters.FOCUS_MODE_INFINITY))
 	        	mItemFocusInfinity = focusMenu.add("Infinity");
-	        	//} else if (focusMode == "continous-video") {
-	        	//	mItemFocusContinous = focusMenu.add("Continous Video");
 	        if (mView.getFocusModes().contains(Camera.Parameters.FOCUS_MODE_EDOF))
 	        		mItemFocusEdof= focusMenu.add("EDOF");
+	        // new in android 2.3
+	        if (Build.VERSION.SDK_INT>=9) { 
+	        	if (mView.getFocusModes().contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
+	        		mItemFocusContinuous = focusMenu.add("continuous");
+	        	if (mView.hasMultipleCameras()) {
+	        		Menu cameraMenu = menu.addSubMenu("Choose Camera");
+	        		mItemFrontCamera =  cameraMenu.add("Front facing camera");
+	        		mItemBackCamera =  cameraMenu.add("Back facing camera");
+	        	}
+	        }      
         }
         
         mItemSizes = new ArrayList<MenuItem>();
@@ -148,16 +157,19 @@ public class AndliscaActivity extends Activity {
         
         mResolutions = mView.getResolutions();
         mItemResolutions = new ArrayList<MenuItem>();
+        
         if (mResolutions != null) {
         	Menu resolutionMenu = menu.addSubMenu("Camera resolution");
         	for (Camera.Size size : mResolutions) {
         		mItemResolutions.add(resolutionMenu.add(size.width + "p"));
         	} 
         }   
+        
+        Log.i(TAG,"resolutions: " + mResolutions);
     }
  
     @Override
-    protected Dialog onCreateDialog(int id) {
+    public Dialog onCreateDialog(int id) {
         switch(id) {
         case DIALOG_INFO:
         	AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -209,13 +221,27 @@ public class AndliscaActivity extends Activity {
         else if (item == mItemFocusFixed)
         	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED); 
         else if (item == mItemFocusEdof)
-        	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_EDOF); 
-        else if (mItemSizes.contains(item)) {
+        	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_EDOF);
+        else if (mItemSizes.contains(item)) 
         		mView.setLineHeight(mItemSizes.indexOf(item)+1); 
-        } else if (mResolutions != null) {
-        	if (mItemResolutions.contains(item))
-        		mView.setResolution(mResolutions.get(mItemResolutions.indexOf(item))); 
+        
+        if (mResolutions != null) {   
+        	if (mItemResolutions.contains(item)) {
+        		Log.i(TAG, "item found");
+        		Log.i(TAG, "item found "+ mResolutions.get(mItemResolutions.indexOf(item)).width);
+        		mView.setResolution(mResolutions.get(mItemResolutions.indexOf(item)));
+        	} 
         }
+      
+        // new in android 2.3
+        if (Build.VERSION.SDK_INT>=9) { 
+        	if (item == mItemFocusContinuous)
+        		mView.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+        	else if (item == mItemFrontCamera)
+        		mView.setCamera("front");
+        	else if (item == mItemBackCamera)
+        		mView.setCamera("back");        	
+        }                
         return true;
     }
     

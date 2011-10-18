@@ -82,10 +82,11 @@ class AndliscaView extends AndliscaViewBase {
         Bitmap bmp = Bitmap.createBitmap(
         		getFrameWidth(), 
         		getFrameHeight(), 
-        		Bitmap.Config.ARGB_8888);        
+        		Bitmap.Config.ARGB_8888);    
         
-        if (Utils.matToBitmap(mRgba, bmp))
+        if (Utils.matToBitmap(mRgba, bmp)) {       
             return bmp;
+        }
         
         bmp.recycle();
         return null;
@@ -125,8 +126,12 @@ class AndliscaView extends AndliscaViewBase {
 		   	try{	
 				if (Utils.matToBitmap(mScanImage, save_bmp)) {    		        
 			  		Matrix mtx = new Matrix();
-					mtx.postRotate(90);
-			  		mtx.preScale(1, -1);
+			  		if (isFrontCamera())
+			  			mtx.postRotate(-90);
+			  		else {
+			  			mtx.postRotate(90);
+			  			mtx.preScale(1, -1);
+			  		}
 			  		Bitmap rotate_bmp = Bitmap.createBitmap(save_bmp, 
 			 				0, 0, getFrameHeight(), mRows, mtx, true);        		   		
 	   		
