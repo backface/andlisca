@@ -21,7 +21,7 @@ public abstract class AndliscaViewBase
 	extends SurfaceView 
 	implements SurfaceHolder.Callback, Runnable {
 
-	private static final String TAG = "Andlisca::SurfaceView";
+	private static final String TAG = "Andlisca::ViewBase";
 
     private static Camera		mCamera;
     private SurfaceHolder       mHolder;
@@ -44,9 +44,8 @@ public abstract class AndliscaViewBase
     private List<Camera.Size> 	mResolutions;
     
     protected static boolean 	mResolutionChanged=false;
-    private boolean 			showFPS = false;
     private boolean 			mHasMultipleCameras = false;
-    
+    private boolean 				showFPS = false;    
 
     public AndliscaViewBase(Context context) {
         super(context);
@@ -148,6 +147,12 @@ public abstract class AndliscaViewBase
         		mCameraId = mBackCameraId;
         	}
         	Log.i(TAG, "fcous modes:" + mCamera.getParameters().getFocusMode());
+            Log.i(TAG, "available focus modes: " + mFocusModes); 
+        	Log.i(TAG,"supported preview formats: " + mCamera.getParameters().getSupportedPreviewFormats().toString());    	
+        	Log.i(TAG,"current:" + mCamera.getParameters().getPreviewFormat());    	
+        	Log.i(TAG,"supported preview fps range:" + mCamera.getParameters().getSupportedPreviewFpsRange().toString());
+        	Log.i(TAG,"supported preview Framerates: " + mCamera.getParameters().getSupportedPreviewFrameRates());
+        	Log.i(TAG,"current: " + mCamera.getParameters().getPreviewFrameRate());           	
         	
         	setBestResolution();
     		mResolutionChanged = true;
@@ -165,11 +170,15 @@ public abstract class AndliscaViewBase
     }    
     
     public void toggleFPSDisplay() {
-    	if (showFPS == true) 
+    	if (showFPS) 
     		showFPS = false;
     	else
     		showFPS = true;
-    }    
+    }   
+    
+    public boolean showsFPS() {
+    	return showFPS;
+    } 
     
     public void setBestResolution() {	
     	Camera.Parameters params = mCamera.getParameters();
@@ -195,7 +204,7 @@ public abstract class AndliscaViewBase
     }
     
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
-        Log.i(TAG, "surfaceCreated");
+        Log.i(TAG, "surfaceChanged");
         if (mCamera != null) {
             mFrameWidth = width;
             mFrameHeight = height;
@@ -208,7 +217,7 @@ public abstract class AndliscaViewBase
             // ask for focus modes
             Camera.Parameters params = mCamera.getParameters();
             mFocusModes = params.getSupportedFocusModes();
-            Log.i(TAG, "available focus modes: " + mFocusModes);                      
+         
 
             // fix portrait setting
             params.set("orientation", "portrait");
@@ -251,6 +260,7 @@ public abstract class AndliscaViewBase
         } else {
         	mCamera = Camera.open();
         }
+
         mCamera.setPreviewCallback(new PreviewCallback() {
             public void onPreviewFrame(byte[] data, Camera camera) {
                 synchronized (AndliscaViewBase.this) {
@@ -303,9 +313,10 @@ public abstract class AndliscaViewBase
             if (bmp != null) {
                 Canvas canvas = mHolder.lockCanvas();
                 if (canvas != null) {
-                	canvas.drawColor(Color.BLACK);
-                	mFps.draw(canvas, canvas.getWidth()/2+20, canvas.getHeight()-25);
+                	canvas.drawColor(Color.BLACK);                	
                 	
+                	
+                	//flip canvas 
                 	if(isFrontCamera())  {
                 		canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);
                 		canvas.scale(1,-1,canvas.getWidth()/2, canvas.getHeight()/2);
@@ -321,7 +332,8 @@ public abstract class AndliscaViewBase
                 	} else { 
                 		canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);
                 	}
-                	
+                	if (showFPS)
+                		mFps.draw(canvas, canvas.getWidth()/2+20, canvas.getHeight()-25);
                 	
                 	mHolder.unlockCanvasAndPost(canvas); 
                 }

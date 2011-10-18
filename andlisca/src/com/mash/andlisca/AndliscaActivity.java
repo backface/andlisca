@@ -35,6 +35,8 @@ public class AndliscaActivity extends Activity {
     private MenuItem			mItemInfo;    
     private MenuItem	 		mItemFrontCamera;
     private MenuItem	 		mItemBackCamera;
+    private MenuItem	 		mItemSafeMode;
+    private MenuItem	 		mItemFPS;
     
     private List<MenuItem>		mItemResolutions;
     private List<MenuItem>		mItemSizes;
@@ -141,11 +143,6 @@ public class AndliscaActivity extends Activity {
 	        if (Build.VERSION.SDK_INT>=9) { 
 	        	if (mView.getFocusModes().contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
 	        		mItemFocusContinuous = focusMenu.add("continuous");
-	        	if (mView.hasMultipleCameras()) {
-	        		Menu cameraMenu = menu.addSubMenu("Choose Camera");
-	        		mItemFrontCamera =  cameraMenu.add("Front facing camera");
-	        		mItemBackCamera =  cameraMenu.add("Back facing camera");
-	        	}
 	        }      
         }
         
@@ -164,6 +161,25 @@ public class AndliscaActivity extends Activity {
         		mItemResolutions.add(resolutionMenu.add(size.width + "p"));
         	} 
         }   
+
+        // new in android 2.3
+        if (Build.VERSION.SDK_INT>=9) { 
+        	if (mView.hasMultipleCameras()) {
+        		Menu cameraMenu = menu.addSubMenu("Choose Camera");
+        		mItemFrontCamera =  cameraMenu.add("Front facing camera");
+        		mItemBackCamera =  cameraMenu.add("Back facing camera");
+        	}
+        }    
+        
+        if (mView.isInSafeMode())
+        	mItemSafeMode = menu.add("Turn Safe/Save Mode off");
+        else
+        	mItemSafeMode = menu.add("Turn Safe/Save Mode on");
+        
+        if (mView.showsFPS())
+        	mItemFPS = menu.add("Hide FPS");
+        else
+        	mItemFPS = menu.add("Show FPS");        
         
         Log.i(TAG,"resolutions: " + mResolutions);
     }
@@ -211,7 +227,11 @@ public class AndliscaActivity extends Activity {
         	Toast.makeText(this,mView.saveBitmap(), Toast.LENGTH_SHORT).show();
         }
         else if (item == mItemClear)
-        	mView.clearImage();          
+        	mView.clearImage();      
+        else if (item == mItemSafeMode)
+        	mView.toggleSafeMode();  
+        else if (item == mItemFPS)
+        	mView.toggleFPSDisplay();        
         else if (item == mItemFocusAuto)
         	mView.AutofocusNow();          
         else if (item == mItemFocusMacro)

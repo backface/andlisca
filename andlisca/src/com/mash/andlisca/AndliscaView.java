@@ -24,9 +24,11 @@ class AndliscaView extends AndliscaViewBase {
     private int cLine=0;
     private int mRows=0;
     private int mLineHeight=1;
+    public boolean safeMode;
     
     public AndliscaView(Context context) {
         super(context);
+        safeMode=false;
     }
     
     @Override
@@ -53,17 +55,19 @@ class AndliscaView extends AndliscaViewBase {
             clearImage(); 
             mResolutionChanged = false;
         }
+        
         mYuv.put(0, 0, data);
         Imgproc.cvtColor(mYuv, mRgba, Imgproc.COLOR_YUV420sp2RGB, 4);
 
         for(int i=0; i<mLineHeight; i++) {
-        	mScanImage.push_back(mRgba.row(getFrameHeight()/2-mLineHeight/2+i));
+        	mScanImage.push_back(mRgba.row(getFrameHeight()/2-mLineHeight/2+i));        	
         }
 	        
 	    if (cLine > 0 )
 	    	mRows = mScanImage.rows() - 1;
 	    else
 	    	mRows = 0;
+	    
 	   	for (int i=0; i < getFrameHeight()/2;  i++) {
 	       	if (i < mRows	)
 	       		mScanImage.row(mRows - i).
@@ -78,15 +82,24 @@ class AndliscaView extends AndliscaViewBase {
        		new Point(getFrameWidth(), getFrameHeight()/2),
        		new Scalar(255,0,0,255),
        		1);                    
-                      
+        
+      //Core.flip(mRgba.t(), mRgba, 1);
+        
         Bitmap bmp = Bitmap.createBitmap(
         		getFrameWidth(), 
         		getFrameHeight(), 
         		Bitmap.Config.ARGB_8888);    
+
+        if (safeMode && mScanImage.rows() >= mScanImage.cols()) {
+        	saveBitmap();
+        	clearImage();
+        }
         
         if (Utils.matToBitmap(mRgba, bmp)) {       
             return bmp;
         }
+        
+
         
         bmp.recycle();
         return null;
@@ -109,7 +122,22 @@ class AndliscaView extends AndliscaViewBase {
             mScanImage = null;
         }
     }
-   
+    
+    public boolean isInSafeMode() {
+    	if(safeMode)
+    		return true;
+    	else
+    		return false;
+    }
+
+    public void toggleSafeMode() {
+    	if(safeMode)
+    		safeMode = false;
+    	else {
+    		safeMode = true;
+    	}
+    }
+     
     
     public String saveBitmap() {
     	String filename;
