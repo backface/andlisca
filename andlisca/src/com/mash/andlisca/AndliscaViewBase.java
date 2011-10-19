@@ -45,7 +45,8 @@ public abstract class AndliscaViewBase
     
     protected static boolean 	mResolutionChanged=false;
     private boolean 			mHasMultipleCameras = false;
-    private boolean 				showFPS = false;    
+    private boolean 			showFPS = false;
+
 
     public AndliscaViewBase(Context context) {
         super(context);
@@ -134,18 +135,13 @@ public abstract class AndliscaViewBase
         	if (type == "front") {
         		Log.i(TAG, "open front facing camera:");        		
         		mCamera = Camera.open(mFrontCameraId);
-        		Camera.Parameters params = mCamera.getParameters();
-        		params.setRotation(0);
-        		mCamera.setParameters(params);
         		mCameraId = mFrontCameraId;
         	} else  {
         		Log.i(TAG, "open back facing camera:");
         		mCamera = Camera.open(mBackCameraId);
-        		Camera.Parameters params = mCamera.getParameters();
-        		params.setRotation(90);
-        		mCamera.setParameters(params);
         		mCameraId = mBackCameraId;
         	}
+    		Camera.Parameters params = mCamera.getParameters();        	
         	Log.i(TAG, "fcous modes:" + mCamera.getParameters().getFocusMode());
             Log.i(TAG, "available focus modes: " + mFocusModes); 
         	Log.i(TAG,"supported preview formats: " + mCamera.getParameters().getSupportedPreviewFormats().toString());    	
@@ -314,9 +310,8 @@ public abstract class AndliscaViewBase
                 Canvas canvas = mHolder.lockCanvas();
                 if (canvas != null) {
                 	canvas.drawColor(Color.BLACK);                	
-                	
-                	
-                	//flip canvas 
+                	                	
+                	//flip canvas in portrait mode
                 	if(isFrontCamera())  {
                 		canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);
                 		canvas.scale(1,-1,canvas.getWidth()/2, canvas.getHeight()/2);
@@ -345,6 +340,5 @@ public abstract class AndliscaViewBase
     public boolean hasMultipleCameras() {
     	return mHasMultipleCameras;
     }
-    
 
 }

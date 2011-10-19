@@ -37,16 +37,18 @@ public class AndliscaActivity extends Activity {
     private MenuItem	 		mItemBackCamera;
     private MenuItem	 		mItemSafeMode;
     private MenuItem	 		mItemFPS;
+    private MenuItem	 		mItemMaxBufferSize;
     
     private List<MenuItem>		mItemResolutions;
     private List<MenuItem>		mItemSizes;
+    private List<MenuItem>		mItemBufferSizes;
     private List<Camera.Size>	mResolutions; 
     
-    private PowerManager.WakeLock mWakeLock;
-        
     
-    private static final int 	DIALOG_INFO=0;
-          
+    
+    private static final int	DIALOG_INFO=0;
+    private PowerManager.WakeLock mWakeLock;
+    
     public AndliscaActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
@@ -172,11 +174,19 @@ public class AndliscaActivity extends Activity {
         	}
         }    
         
-        if (mView.isInSafeMode())
-        	mItemSafeMode = menu.add("Turn Safe/Save Mode off");
-        else
-        	mItemSafeMode = menu.add("Turn Safe/Save Mode on");
+        Menu bufferMenu = menu.addSubMenu("Max buffer width");
+        mItemBufferSizes = new ArrayList<MenuItem>();
+        for (int i=2; i<=4; i++) {
+        	mItemBufferSizes.add(bufferMenu.add( (i*1024) + "px"));
+    	}
+        mItemBufferSizes.add(bufferMenu.add("No limit"));
         
+        if (mView.isInSafeMode())
+        	mItemSafeMode = bufferMenu.add("Turn Safe/Save Mode off");
+        else
+        	mItemSafeMode = bufferMenu.add("Turn Safe/Save Mode on");
+        
+                
         if (mView.showsFPS())
         	mItemFPS = menu.add("Hide FPS");
         else
@@ -245,6 +255,11 @@ public class AndliscaActivity extends Activity {
         	mView.setFocusMode(Camera.Parameters.FOCUS_MODE_EDOF);
         else if (mItemSizes.contains(item)) 
         		mView.setLineHeight(mItemSizes.indexOf(item)+1); 
+        else if (mItemBufferSizes.contains(item)) 
+    		if(mItemBufferSizes.indexOf(item) < 3)
+    			mView.setMaxBufferSize( (mItemBufferSizes.indexOf(item)+2) * 1024);
+    		else
+    			mView.setMaxBufferSize(0);
         
         if (mResolutions != null) {   
         	if (mItemResolutions.contains(item)) {

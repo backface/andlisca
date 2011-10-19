@@ -25,10 +25,12 @@ class AndliscaView extends AndliscaViewBase {
     private int mRows=0;
     private int mLineHeight=1;
     public boolean safeMode;
+    private int	maxBufferSize = 4096;    
     
     public AndliscaView(Context context) {
         super(context);
         safeMode=false;
+        setMaxBufferSize(4096);
     }
     
     @Override
@@ -92,6 +94,17 @@ class AndliscaView extends AndliscaViewBase {
 
         if (safeMode && mScanImage.rows() >= mScanImage.cols()) {
         	saveBitmap();
+        	clearImage();
+
+        	/* another fancy image but performance decrease */
+        	/*
+        	Mat tmp = new Mat();
+        	tmp = mScanImage.rowRange(mLineHeight,mScanImage.rows()).clone();
+        	mScanImage.release();
+        	mScanImage   tmp.clone();
+        	tmp.release();
+        	*/
+        } else if (maxBufferSize != 0 && mScanImage.rows() >= maxBufferSize) {
         	clearImage();
         }
         
@@ -208,4 +221,9 @@ class AndliscaView extends AndliscaViewBase {
     	mLineHeight = s;
     	Log.i(TAG, "set LineHeight to " + s + " pixel.");
     }
+    
+    public void setMaxBufferSize(int s) {
+    	Log.i(TAG,"setting max buffer to:" + s);
+    	maxBufferSize = s;
+    }    
 }
