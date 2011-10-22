@@ -37,7 +37,7 @@ public class AndliscaActivity extends Activity {
     private MenuItem	 		mItemBackCamera;
     private MenuItem	 		mItemSafeMode;
     private MenuItem	 		mItemFPS;
-    private MenuItem	 		mItemMaxBufferSize;
+    private MenuItem	 		mItemSettings;
     
     private List<MenuItem>		mItemResolutions;
     private List<MenuItem>		mItemSizes;
@@ -92,6 +92,7 @@ public class AndliscaActivity extends Activity {
         Log.i(TAG, "onCreateOptionsMenu");        
         mItemSave = menu.add("Save");
         mItemClear = menu.add("Clear");
+        mItemSettings = menu.add("Settings");
         mItemInfo = menu.add("Info");         
         return true;
     }
@@ -101,8 +102,10 @@ public class AndliscaActivity extends Activity {
         Log.i(TAG, "Menu Item selected " + item);
         if (item == mItemSave) {
         	Toast.makeText(this,mView.saveBitmap(), Toast.LENGTH_SHORT).show();
-        } else if (item == mItemClear)
+        } else if (item == mItemClear) {
         	mView.clearImage();          
+    	} else if (item == mItemSettings) {
+    		openContextMenu(mView);
         /* else if (item == mItemFocusAuto)
         	mView.AutofocusNow();          
         else if (item == mItemFocusMacro)
@@ -117,7 +120,7 @@ public class AndliscaActivity extends Activity {
         	if (mItemResolutions.contains(item))
         		mView.setResolution(mResolutions.get(mItemResolutions.indexOf(item))); 
         */
-    	else if (item == mItemInfo) {
+    	} else if (item == mItemInfo) {
     		Log.i(TAG,"ABOUT");
     		showDialog(DIALOG_INFO);
     	}        

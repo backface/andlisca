@@ -85,7 +85,7 @@ class AndliscaView extends AndliscaViewBase {
        		new Scalar(255,0,0,255),
        		1);                    
         
-      //Core.flip(mRgba.t(), mRgba, 1);
+        //Core.flip(mRgba.t(), mRgba, 1);
         
         Bitmap bmp = Bitmap.createBitmap(
         		getFrameWidth(), 
@@ -111,8 +111,6 @@ class AndliscaView extends AndliscaViewBase {
         if (Utils.matToBitmap(mRgba, bmp)) {       
             return bmp;
         }
-        
-
         
         bmp.recycle();
         return null;
