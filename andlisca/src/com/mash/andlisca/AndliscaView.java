@@ -10,13 +10,16 @@ import org.opencv.android.Utils;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-class AndliscaView extends AndliscaViewBase {
+class AndliscaView extends AndliscaViewBase implements OnSharedPreferenceChangeListener{
 	private static final String TAG = "Andlisca::View";
     private Mat mYuv;
     private Mat mRgba;    
@@ -24,19 +27,32 @@ class AndliscaView extends AndliscaViewBase {
     private int cLine=0;
     private int mRows=0;
     private int mLineHeight=1;
-    public boolean safeMode;
-    private int	maxBufferSize = 4096;    
+    public boolean mAutosave;
+    private int	maxBufferSize = 4096;  
+    SharedPreferences preferences; 
     
     public AndliscaView(Context context) {
         super(context);
-        safeMode=false;
-        setMaxBufferSize(4096);
+        mAutosave=false;
+        preferences = PreferenceManager.getDefaultSharedPreferences(this.getContext());
+        preferences.registerOnSharedPreferenceChangeListener(this);
     }
     
     @Override
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
-        super.surfaceChanged(_holder, format, width, height);
+ 
+        mCameraId = Integer.valueOf(preferences.getString("camera_id", "0")); 
+        mResolutionId = Integer.valueOf(preferences.getString("cam" + mCameraId + "_resolution_id", "-1"));
+        Log.i(TAG,"resolution id is " + mResolutionId);
+        
+    	super.surfaceChanged(_holder, format, width, height);
 
+        showsFPS(preferences.getBoolean("show_fps", false));             
+        setLineHeight(Integer.valueOf(preferences.getString("slit_size", "1")));  
+        setMaxBufferSize(Integer.valueOf(preferences.getString("max_buffer_size", "720")));
+        setAutoSave(preferences.getBoolean("autosave", false));  
+        setFocusModeById(Integer.valueOf(preferences.getString("cam" + mCameraId + "_focus_mode_id", "0")));  
+    	
         synchronized (this) {
             // initialize Mats before usage
             mYuv = new Mat(getFrameHeight() + getFrameHeight() / 2, getFrameWidth(), CvType.CV_8UC1);
@@ -44,6 +60,7 @@ class AndliscaView extends AndliscaViewBase {
             mScanImage = new Mat();
             cLine = 0;
         }
+       
     }
 
     @Override
@@ -85,14 +102,15 @@ class AndliscaView extends AndliscaViewBase {
        		new Scalar(255,0,0,255),
        		1);                    
         
-        //Core.flip(mRgba.t(), mRgba, 1);
+        if (isFrontCamera())
+        	Core.flip(mRgba.clone(), mRgba, 1);
         
         Bitmap bmp = Bitmap.createBitmap(
         		getFrameWidth(), 
         		getFrameHeight(), 
         		Bitmap.Config.ARGB_8888);    
 
-        if (safeMode && mScanImage.rows() >= mScanImage.cols()) {
+        if (mAutosave && mScanImage.rows() >= maxBufferSize) {
         	saveBitmap();
         	clearImage();
 
@@ -134,20 +152,25 @@ class AndliscaView extends AndliscaViewBase {
         }
     }
     
-    public boolean isInSafeMode() {
-    	if(safeMode)
+    public boolean isAutoSave() {
+    	if(mAutosave)
     		return true;
     	else
     		return false;
     }
 
-    public void toggleSafeMode() {
-    	if(safeMode)
-    		safeMode = false;
+    public void toggleAutoSave() {
+    	if(mAutosave)
+    		mAutosave = false;
     	else {
-    		safeMode = true;
+    		mAutosave = true;
     	}
     }
+    
+    public void setAutoSave(boolean status) {
+    	mAutosave = status;
+    }
+         
      
     
     public String saveBitmap() {
@@ -183,8 +206,10 @@ class AndliscaView extends AndliscaViewBase {
 			   		File file = new File(fpath, filename+".jpg");
 			   		fOut = new FileOutputStream(file);		   
 			   		
-			   		Log.i(TAG, "saving file to" + file.toString());	  	
-			   		Log.i(TAG, "size is: " + mRows + " x " + getFrameHeight());      	
+			   		if (Log.isLoggable(TAG, Log.INFO)) 
+			   			Log.i(TAG, "saving file to" + file.toString());	  	
+			   		if (Log.isLoggable(TAG, Log.INFO)) 
+			   			Log.i(TAG, "size is: " + mRows + " x " + getFrameHeight());      	
 			   		
 			   		rotate_bmp.compress(Bitmap.CompressFormat.JPEG, 90, fOut);
 			   		rotate_bmp.recycle();
@@ -195,7 +220,7 @@ class AndliscaView extends AndliscaViewBase {
 		   			
 			   		return "Saved image to: " + file.toString();				
 				} else {
-					Log.i(TAG, "saving image failed.");
+					if (Log.isLoggable(TAG, Log.WARN)) Log.w(TAG, "saving image failed.");
 					return "saving image failed.";
 				}
 		   	} catch (Exception e) {
@@ -203,7 +228,7 @@ class AndliscaView extends AndliscaViewBase {
 		   		return "saving image failed. see stack trace";
 		   	}		   	
         } else {
-        	Log.i(TAG, "saving image failed.no external media found");
+        	if (Log.isLoggable(TAG, Log.WARN)) Log.i(TAG, "saving image failed. no external media found");
         	return "Saving image failed. No sdcard found!";
         }
     }
@@ -212,16 +237,24 @@ class AndliscaView extends AndliscaViewBase {
        	mScanImage.release();
        	mScanImage = new Mat();
        	cLine = 0;
-       	Log.i(TAG, "cleared scanImage!");   
+       	if (Log.isLoggable(TAG, Log.INFO)) Log.i(TAG, "cleared scanImage!");   
     }
     
     public void setLineHeight(int s) {
     	mLineHeight = s;
-    	Log.i(TAG, "set LineHeight to " + s + " pixel.");
+    	if (Log.isLoggable(TAG, Log.INFO)) Log.i(TAG, "set LineHeight to " + s + " pixel.");
     }
     
     public void setMaxBufferSize(int s) {
-    	Log.i(TAG,"setting max buffer to:" + s);
+    	if (Log.isLoggable(TAG, Log.INFO)) Log.i(TAG,"setting max buffer to:" + s);
     	maxBufferSize = s;
-    }    
+    }
+
+	public void onSharedPreferenceChanged(SharedPreferences pref,
+			String key) {
+		// TODO Auto-generated method stub
+		if (key == "resolution_id")
+			mResolutionId=pref.getInt(key, 0);		
+		Log.i(TAG,"preference" +  key + " changed");
+	}    
 }

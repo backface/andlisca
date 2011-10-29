@@ -1,4 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">andlisca</string>
+    <string name="set_preferences">Preferences</string>
+    <string name="show_fps">Show FPS</string>
+    <string name="choose_camera">Choose camera</string>
+    <string name="focus_modes">Focus modes</string>
+    <string name="choose_resolution">Choose resolution</string>
+    <string name="max_buffer_width">Maximum buffer width</string>
+    <string-array name="resolutions">
+    </string-array>
+    <string-array name="resolutions_values">
+    </string-array>    
+    <string-array name="slit_sizes">
+        <item>1px</item>
+        <item>2px</item>
+        <item>3px</item>
+        <item>4px</item>
+        <item>5px</item>
+        <item>6px</item>
+        <item>7px</item>
+        <item>8px</item>
+        <item>9px</item>
+        <item>10px</item>
+    </string-array>
+    <string-array name="slit_sizes_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+    </string-array>   
+    <string-array name="max_buffer_sizes">
+        <item>720 pixel</item>
+        <item>1024 pixel</item>
+        <item>2048 pixel</item>
+        <item>4096 pixel</item>
+        <item>no limit</item>
+    </string-array>
+    <string-array name="max_buffer_sizes_values">
+        <item>720</item>
+        <item>1024</item>
+        <item>2048</item>
+        <item>4096</item>
+        <item>0</item>
+    </string-array>          
 </resources>

@@ -3,7 +3,7 @@ package com.mash.andlisca;
 import java.io.IOException;
 import java.util.List;
 
-import com.mash.andlisca.FpsMeter;
+import com.mash.tools.FpsMeter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -34,245 +34,60 @@ public abstract class AndliscaViewBase
     private boolean             mThreadRun;
     private FpsMeter            mFps;
     private int            		mNumberOfCameras=1;
-    private int            		mDefaultCameraId;
-    private int            		mCameraId;
+    
     private int            		mFrontCameraId;
     private int            		mBackCameraId;
-    //private String			mfocusMode;
+
+    protected int            	mResolutionId=-1;
+    protected int            	mCameraId=0;
     
     private List<String>		mFocusModes;
     private List<Camera.Size> 	mResolutions;
+    private Camera.Size[][]		mAllResolutions;
+    private String[][] 			mAllFocusmodes;
     
     protected static boolean 	mResolutionChanged=false;
     private boolean 			mHasMultipleCameras = false;
     private boolean 			showFPS = false;
+	private boolean mFlashIsOn = false;   
 
-
-    public AndliscaViewBase(Context context) {
+    public AndliscaViewBase(Context context) 
+    {
         super(context);
         mHolder = getHolder();
         mHolder.addCallback(this);
         mFps = new FpsMeter();        
-        Log.i(TAG, "Instantiated new  " + this.getClass());
-        Log.i(TAG, "Android version  " + Build.VERSION.SDK_INT);
-    }
-
-    public int getFrameWidth() {
-        return mFrameWidth;
-    }
-
-    public int getFrameHeight() {
-        return mFrameHeight;
-    }
-
-    public List<String> getFocusModes() {
-        return mCamera.getParameters().getSupportedFocusModes();
-    }    
-
-    public String getFocusMode() {
-        return mCamera.getParameters().getFocusMode();
+        if (Log.isLoggable(TAG, Log.INFO)) { 
+        	Log.i(TAG, "Instantiated new  " + this.getClass());
+        	Log.i(TAG, "Android version " + Build.VERSION.SDK_INT);
+        }
+        initCameras();
     }
     
-    public boolean setFocusMode(String mode) {
-    	Camera.Parameters params = mCamera.getParameters();
-    	if (mFocusModes.contains(mode)) {
-    		params.setFocusMode(mode);
-    		mCamera.setParameters(params);
-    		Log.i(TAG, "set Focus Mode to " + mode);
-    		return true;
-    	} else {
-    		Log.i(TAG, "FAILED in setting Focus Mode to " + mode);
-    		return false;
-    	}    	
-    }
-    
-	public void AutofocusNow() {
-		if (getFocusMode() != Camera.Parameters.FOCUS_MODE_AUTO) 
-			setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO); 
-		mCamera.autoFocus(null);
-	}    
-    
-    public List<Camera.Size> getResolutions() {
-        return mResolutions;
-    }    
-    
-    public void setResolution(Camera.Size size) {
-    	mCamera.stopPreview();
-        mCamera.setPreviewCallback(null);
+    public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) 
+    {
+    	if (Log.isLoggable(TAG, Log.INFO)) 
+    		Log.i(TAG, "surfaceChanged");   
         
-    	Camera.Parameters params = mCamera.getParameters();
-    	mFrameWidth = size.width;
-        mFrameHeight = size.height;    	
-        
-    	params.setPreviewSize(getFrameWidth(), getFrameHeight());
-    	mCamera.setParameters(params);
-    	Log.i(TAG, "setting resolution: " + getFrameWidth() + "x" + getFrameHeight());  
-    	mResolutionChanged = true;
+    	mCanvasWidth = width;
+        mCanvasHeight = height;        
+    	openCamera(mCameraId, mResolutionId);
     	
-    	mCamera.setPreviewCallback(new PreviewCallback() {
-            public void onPreviewFrame(byte[] data, Camera camera) {
-                synchronized (AndliscaViewBase.this) {
-                    mFrame = data;
-                    AndliscaViewBase.this.notify();
-                }
-            }
-        });    	
-    	mCamera.startPreview();
-    } 
- 
-    protected boolean isFrontCamera() { 
-    	if (Build.VERSION.SDK_INT < 9)
-    		return false;
-    	else
-    		return mCameraId == mFrontCameraId;
-    }
-    public void setCamera(String type) {
-    	if (Build.VERSION.SDK_INT>=9) {
-        	mCamera.stopPreview();
-            mCamera.setPreviewCallback(null);
-            mCamera.release();
-            
-        	if (type == "front") {
-        		Log.i(TAG, "open front facing camera:");        		
-        		mCamera = Camera.open(mFrontCameraId);
-        		mCameraId = mFrontCameraId;
-        	} else  {
-        		Log.i(TAG, "open back facing camera:");
-        		mCamera = Camera.open(mBackCameraId);
-        		mCameraId = mBackCameraId;
-        	}
-    		Camera.Parameters params = mCamera.getParameters();        	
-        	Log.i(TAG, "fcous modes:" + mCamera.getParameters().getFocusMode());
-            Log.i(TAG, "available focus modes: " + mFocusModes); 
-        	Log.i(TAG,"supported preview formats: " + mCamera.getParameters().getSupportedPreviewFormats().toString());    	
-        	Log.i(TAG,"current:" + mCamera.getParameters().getPreviewFormat());    	
-        	Log.i(TAG,"supported preview fps range:" + mCamera.getParameters().getSupportedPreviewFpsRange().toString());
-        	Log.i(TAG,"supported preview Framerates: " + mCamera.getParameters().getSupportedPreviewFrameRates());
-        	Log.i(TAG,"current: " + mCamera.getParameters().getPreviewFrameRate());           	
-        	
-        	setBestResolution();
-    		mResolutionChanged = true;
-    	
-    		mCamera.setPreviewCallback(new PreviewCallback() {
-    			public void onPreviewFrame(byte[] data, Camera camera) {
-    				synchronized (AndliscaViewBase.this) {
-    					mFrame = data;
-    					AndliscaViewBase.this.notify();
-    				}
-    			}
-    		});    	
-    		mCamera.startPreview();
-    	}
-    }    
-    
-    public void toggleFPSDisplay() {
-    	if (showFPS) 
-    		showFPS = false;
-    	else
-    		showFPS = true;
-    }   
-    
-    public boolean showsFPS() {
-    	return showFPS;
-    } 
-    
-    public void setBestResolution() {	
-    	Camera.Parameters params = mCamera.getParameters();
-        mResolutions = params.getSupportedPreviewSizes();
-                           
-        Log.i(TAG, "available resolutions:");
-        // selecting optimal camera preview size
-        {
-            double minDiff = Double.MAX_VALUE;
-            for (Camera.Size size : mResolutions) {
-                if (Math.abs(size.height - mCanvasHeight) < minDiff) {
-                    mFrameWidth = size.width;
-                    mFrameHeight = size.height;
-                    minDiff = Math.abs(size.height - mCanvasHeight);
-                }                    
-                Log.i(TAG, size.width + "x" + size.height);
-            }
-        }
-        
-        params.setPreviewSize(getFrameWidth(), getFrameHeight()); 
-        mCamera.setParameters(params);
-        Log.i(TAG, "setting resolution: " + getFrameWidth() + "x" + getFrameHeight());  	
-    }
-    
-    public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
-        Log.i(TAG, "surfaceChanged");
-        if (mCamera != null) {
-            mFrameWidth = width;
-            mFrameHeight = height;
-            mCanvasWidth = width;
-            mCanvasHeight = height;
-
-            //choose resolution that fits screen
-            setBestResolution();
-            
-            // ask for focus modes
-            Camera.Parameters params = mCamera.getParameters();
-            mFocusModes = params.getSupportedFocusModes();
-         
-
-            // fix portrait setting
-            params.set("orientation", "portrait");
-            params.setRotation(90);                        
-            mCamera.setParameters(params);
-            
-            try {
-				mCamera.setPreviewDisplay(null);
-			} catch (IOException e) {
-				Log.e(TAG, "mCamera.setPreviewDisplay fails: " + e);
-			}
-            mCamera.startPreview();
-        }
     }
 
-    public void surfaceCreated(SurfaceHolder holder) {   
-    	if (Build.VERSION.SDK_INT>=9) {
-    		mDefaultCameraId = 0;
-    		
-        	Log.i(TAG, "available cameras:");
-        	mNumberOfCameras = Camera.getNumberOfCameras();
-        	Log.i(TAG, "Found " + mNumberOfCameras + " cameras.");
-        	if (mNumberOfCameras > 0) {
-        		mHasMultipleCameras = true;
-        		// Find the ID of the default camera
-        		CameraInfo cameraInfo = new CameraInfo();
-        		for (int i = 0; i < mNumberOfCameras; i++) {
-        			Camera.getCameraInfo(i, cameraInfo);
-        			Log.i(TAG, "info " + cameraInfo.toString());
-        			if (cameraInfo.facing == CameraInfo.CAMERA_FACING_BACK) {
-        				mDefaultCameraId = i;
-        				mBackCameraId = i;
-        				mCameraId = i;
-        			} else if (cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT) {
-        				mFrontCameraId = i;
-        			}
-        		}        		
-        	}
-        	mCamera = Camera.open(mDefaultCameraId); 
-        } else {
-        	mCamera = Camera.open();
-        }
+    public void surfaceCreated(SurfaceHolder holder) 
+    {   
+    	    	
+        if (Log.isLoggable(TAG, Log.INFO)) 
+        	Log.i(TAG, "surfaceCreated");
 
-        mCamera.setPreviewCallback(new PreviewCallback() {
-            public void onPreviewFrame(byte[] data, Camera camera) {
-                synchronized (AndliscaViewBase.this) {
-                    mFrame = data;
-                    AndliscaViewBase.this.notify();
-                }
-            }
-        });
-        Log.i(TAG, "surfaceCreated");
-        
-        
         (new Thread(this)).start();
     }
 
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.i(TAG, "surfaceDestroyed");
+    public void surfaceDestroyed(SurfaceHolder holder) 
+    {
+    	if (Log.isLoggable(TAG, Log.INFO)) 
+    		Log.i(TAG, "surfaceDestroyed");
         mThreadRun = false;
         if (mCamera != null) {
             synchronized (this) {
@@ -286,9 +101,12 @@ public abstract class AndliscaViewBase
 
     protected abstract Bitmap processFrame(byte[] data);
 
-    public void run() {
+    public void run() 
+    {
         mThreadRun = true;
-        Log.i(TAG, "Starting processing thread");
+        
+        if (Log.isLoggable(TAG, Log.INFO)) 
+        	Log.i(TAG, "Starting processing thread");
         
         mFps.init();
         
@@ -310,7 +128,8 @@ public abstract class AndliscaViewBase
                 Canvas canvas = mHolder.lockCanvas();
                 if (canvas != null) {
                 	canvas.drawColor(Color.BLACK);                	
-                	                	
+                	
+                	/*
                 	//flip canvas in portrait mode
                 	if(isFrontCamera())  {
                 		canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);
@@ -318,15 +137,19 @@ public abstract class AndliscaViewBase
                 	} else {
                 		canvas.rotate(90, canvas.getWidth()/2, canvas.getHeight()/2);
             		}
+            		*/
                 	
                 	canvas.drawBitmap(bmp, (canvas.getWidth() - getFrameWidth()) / 2, (canvas.getHeight() - getFrameHeight()) / 2, null);
                 	
+                	/*
                 	if(isFrontCamera()) {                		
                 		canvas.scale(1,-1,canvas.getWidth()/2, canvas.getHeight()/2);
                 		canvas.rotate(90, canvas.getWidth()/2, canvas.getHeight()/2);
                 	} else { 
                 		canvas.rotate(-90, canvas.getWidth()/2, canvas.getHeight()/2);
                 	}
+                	*/
+                	
                 	if (showFPS)
                 		mFps.draw(canvas, canvas.getWidth()/2+20, canvas.getHeight()-25);
                 	
@@ -335,10 +158,399 @@ public abstract class AndliscaViewBase
                 bmp.recycle();
             }
         }
+    }    
+
+
+    public void initCameras() 
+    {
+    	if (Build.VERSION.SDK_INT>=9) {    				       	    		
+        	mNumberOfCameras = Camera.getNumberOfCameras();
+        	
+        	Log.i(TAG, "available cameras:");
+        	Log.i(TAG, "Found " + mNumberOfCameras + " cameras.");
+        	
+        	if (mNumberOfCameras > 1) {
+        		mHasMultipleCameras = true;
+        		// Find the ID of the default camera
+        		CameraInfo cameraInfo = new CameraInfo();
+        		
+        		mAllResolutions = new Camera.Size[mNumberOfCameras][];
+        		mAllFocusmodes = new String[mNumberOfCameras][];
+
+        		for (int i = 0; i < mNumberOfCameras; i++) {
+        			Camera.getCameraInfo(i, cameraInfo);       			        			
+        			if (cameraInfo.facing == CameraInfo.CAMERA_FACING_BACK) {
+        				mBackCameraId = i;
+        				if (mCameraId == -1) mCameraId = i;
+        				Log.i(TAG, "Camera " + i + " is back facing.");
+        				
+        			} else if (cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT) {
+        				mFrontCameraId = i;
+        				Log.i(TAG, "Camera " + i + " is front facing.");
+        			}
+    				mCamera = Camera.open(i);
+    				
+    				List<Camera.Size> m = mCamera.getParameters().getSupportedPreviewSizes();
+    				mAllResolutions[i] = new Camera.Size[m.size()];
+    				for (int j=0;j<m.size();j++) {
+    					mAllResolutions[i][j] = m.get(j);
+    				}
+    				
+    				List<String> l = mCamera.getParameters().getSupportedFocusModes();
+    				mAllFocusmodes[i] = new String[l.size()];
+    				for (int j=0;j<l.size();j++) {
+    					mAllFocusmodes[i][j] = l.get(j);
+    				}				
+    				
+    				mCamera.release();
+    				mCamera = null;
+        		}        		
+        	}
+    	}
     }
     
-    public boolean hasMultipleCameras() {
-    	return mHasMultipleCameras;
+    public void openCamera(int id, int resolution_id) 
+    {    	
+    	if (mCamera != null) {
+    		mCamera.stopPreview();
+    		mCamera.setPreviewCallback(null);
+    		mCamera.release();
+    	}
+    	
+        if (Build.VERSION.SDK_INT>=9) {
+            mCamera = Camera.open(id);
+            mCameraId = id;
+        } else {
+        	mCamera = Camera.open();
+        }
+        
+        mFocusModes = getFocusModes();
+        mResolutions = mCamera.getParameters().getSupportedPreviewSizes();
+        
+        //mFocusModes = getFocusModes();
+        
+        Log.i(TAG, "opening camera:" + id);
+    	if (Log.isLoggable(TAG, Log.INFO)) {
+        	Log.i(TAG,"  enabled focus mode:" + mCamera.getParameters().getFocusMode());
+            Log.i(TAG,"  available focus modes: " + mCamera.getParameters().getSupportedFocusModes()); 
+        	Log.i(TAG,"  supported preview formats: " + mCamera.getParameters().getSupportedPreviewFormats());    	
+        	Log.i(TAG,"  current preview format :" + mCamera.getParameters().getPreviewFormat());    
+        	if (Build.VERSION.SDK_INT>=9) {
+        		Log.i(TAG,"  supported preview fps range:" + mCamera.getParameters().getSupportedPreviewFpsRange());        		        		
+        	}
+        	Log.i(TAG,"  supported preview Framerates: " + mCamera.getParameters().getSupportedPreviewFrameRates());
+        	Log.i(TAG,"  current preview Framerates: " + mCamera.getParameters().getPreviewFrameRate());
+        	Log.i(TAG,"  min exposure compensation: " + mCamera.getParameters().getMinExposureCompensation());
+        	Log.i(TAG,"  max exposure compensation: " + mCamera.getParameters().getMaxExposureCompensation());
+        	Log.i(TAG,"  current exposure compensation: " + mCamera.getParameters().getExposureCompensation());
+        	Log.i(TAG,"  supported white balance settings: " + mCamera.getParameters().getSupportedWhiteBalance());
+        	Log.i(TAG,"  current white balance: " + mCamera.getParameters().getWhiteBalance());
+        	Log.i(TAG,"  supported flash modes: " + mCamera.getParameters().getSupportedFlashModes());        	
+        	Log.i(TAG,"  zoom supported: " + mCamera.getParameters().isZoomSupported());
+        	if (mCamera.getParameters().isZoomSupported()) {
+        		Log.i(TAG,"  max zoom: " + mCamera.getParameters().getMaxZoom());
+        		Log.i(TAG,"  current zoom: " + mCamera.getParameters().getZoom());
+        		Log.i(TAG,"  zoom ratios: " + mCamera.getParameters().getZoomRatios());
+        	}
+        	Log.i(TAG,"  supported color effects: " + mCamera.getParameters().getSupportedColorEffects());
+    	}       	 	
+    	
+    	if(resolution_id==-1)
+    		setBestMatchingResolution();
+    	else 
+    		setResolutionById(resolution_id);
+    		
+		mResolutionChanged = true;
+	
+		mCamera.setPreviewCallback(new PreviewCallback() {
+			public void onPreviewFrame(byte[] data, Camera camera) {
+				synchronized (AndliscaViewBase.this) {
+					mFrame = data;
+					AndliscaViewBase.this.notify();
+				}
+			}
+		});    	
+		
+		try {
+			mCamera.setPreviewDisplay(null);
+		} catch (IOException e) {
+			Log.e(TAG, "mCamera.setPreviewDisplay fails: " + e);
+		}		
+		mCamera.startPreview();	
+    }
+    
+    public void openCamera(String type) 
+    {
+    	if (type == "front") {
+    		Log.i(TAG, "open front facing camera:");        		
+    		openCamera(mFrontCameraId, mResolutionId);
+    	} else  {
+    		Log.i(TAG, "open back facing camera:");
+    		openCamera(mBackCameraId, mResolutionId);
+    	}
+    }    
+
+    public CharSequence[] getCameraStrings() {
+    	Log.i(TAG, "get CameraStrings");
+    	String[] arr = new String[mNumberOfCameras];
+    	
+    	if (Build.VERSION.SDK_INT < 9)
+    		return null;
+    	
+    	CameraInfo cameraInfo = new CameraInfo();
+		for (int i = 0; i < mNumberOfCameras; i++) {
+			Camera.getCameraInfo(i, cameraInfo);       			        			
+			if (cameraInfo.facing == CameraInfo.CAMERA_FACING_BACK) {
+				arr[i] = "Back facing";
+			} else if (cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT) {
+				arr[i] = "Front facing";
+			} else {
+				arr[i] = "unknown camera";
+			}
+		}   
+   		return arr;		
+	}
+    
+    public CharSequence[] getCameraIds() {
+    	Log.i(TAG, "get CameraIds");
+    	String[] arr = new String[mNumberOfCameras];
+    	
+    	if (Build.VERSION.SDK_INT < 9)
+    		return null;
+    	
+		for (int i = 0; i < mNumberOfCameras; i++) {
+			arr[i] = "" + i;
+		}   
+   		return arr;		
+	}    
+    
+    public int getCameraId() {
+    	return mCameraId;
+    }
+    
+    protected boolean isFrontCamera() 
+    { 
+    	if (Build.VERSION.SDK_INT < 9)
+    		return false;
+    	else
+    		return mCameraId == mFrontCameraId;
+    }    
+    
+    public List<String> getFocusModes() 
+    {
+        return mCamera.getParameters().getSupportedFocusModes();
+    }    
+
+    public String getFocusMode() 
+    {
+        return mCamera.getParameters().getFocusMode();
+    }
+    
+    public CharSequence[] getFocusModesStrings(int id) 
+    {
+    	Log.i(TAG,"getFocusModesStrings");
+    	Log.i(TAG,"FOCUS MODES are: " + mAllFocusmodes);
+    	String[] resArray = new String[mAllFocusmodes[id].length];
+    	int i = 0;
+   		for (String mode : mAllFocusmodes[id]) {
+    		resArray[i] = mode;
+   			i++;
+    	}
+   		return resArray;
+    }       
+    
+    public CharSequence[] getFocusModesIds(int id) 
+    {
+    	Log.i(TAG,"getFocusModesIds");
+    	String[] resArray = new String[mAllFocusmodes[id].length];
+    	int i = 0;
+   		for (String mode : mAllFocusmodes[id]) {
+    		resArray[i] = ""+i;
+   			i++;
+    	}
+   		return resArray;
+    }      
+    
+    public boolean setFocusMode(String mode) 
+    {
+    	Camera.Parameters params = mCamera.getParameters();
+    	if (mFocusModes.contains(mode)) {
+    		params.setFocusMode(mode);
+    		mCamera.setParameters(params);
+    		if (Log.isLoggable(TAG, Log.INFO)) 
+    			Log.i(TAG, "set Focus Mode to " + mode);
+    		return true;
+    	} else {
+    		if (Log.isLoggable(TAG, Log.WARN)) 
+    			Log.w(TAG, "FAILED in setting Focus Mode to " + mode);
+    		return false;
+    	}    	
+    }
+    
+    public boolean setFocusModeById(int id) 
+    {
+    	Camera.Parameters params = mCamera.getParameters();
+   		params.setFocusMode(mFocusModes.get(id));
+   		mCamera.setParameters(params);
+   		if (Log.isLoggable(TAG, Log.INFO)) 
+   			Log.i(TAG, "set Focus Mode to " + id);
+   		return true;
+    }    
+    
+	public void AutofocusNow() 
+	{
+		if (getFocusMode() != Camera.Parameters.FOCUS_MODE_AUTO) 
+			setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO); 
+		mCamera.autoFocus(null);
+	}    
+    
+    public List<Camera.Size> getResolutions() 
+    {
+    	mResolutions = mCamera.getParameters().getSupportedPreviewSizes();
+        return mResolutions;
+    }    
+    
+    public CharSequence[] getResolutionStrings(int id) 
+    {
+    	Log.i(TAG,"getResolutionStrings");
+    	String[] resArray = new String[mAllResolutions[id].length+1];
+    	int i = 0;
+    	resArray[i] = "auto";
+   		for (Camera.Size size : mAllResolutions[id]) {
+   			i++;
+    		resArray[i] = size.width + "x" + size.height;
+    	}
+   		return resArray;
+    }   
+
+    public CharSequence[] getResolutionIds(int id) 
+    {
+    	Log.i(TAG,"getResolutionIds");
+    	String[] resArray = new String[mAllResolutions[id].length+1];
+    	resArray[0] = "-1";
+   		for (int i=0; i<mAllResolutions[id].length; i++) {            
+    		resArray[i+1] = "" + i;
+    	}
+   		return resArray;
+    }   
+    
+    public void setResolutionById(int id) 
+    {
+    	if (id >= 0)
+    		setResolution(mResolutions.get(id));
+    	else
+    		setBestMatchingResolution();
+    }
+    
+    public void setBestMatchingResolution() 
+    {	
+    	Camera.Parameters params = mCamera.getParameters();
+    	
+                           
+        if (Log.isLoggable(TAG, Log.INFO)) 
+        	Log.i(TAG, "available resolutions:");
+        // selecting optimal camera preview size
+        {
+            double minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : mResolutions) {
+                if (Math.abs(size.height - mCanvasHeight) < minDiff) {
+                    mFrameWidth = size.width;
+                    mFrameHeight = size.height;
+                    minDiff = Math.abs(size.height - mCanvasHeight);
+                }                    
+                if (Log.isLoggable(TAG, Log.INFO)) 
+                	Log.i(TAG, size.width + "x" + size.height);
+            }
+        }
+        
+        params.setPreviewSize(getFrameWidth(), getFrameHeight()); 
+        mCamera.setParameters(params);
+        if (Log.isLoggable(TAG, Log.INFO)) 
+        	Log.i(TAG, "setting resolution: " + getFrameWidth() + "x" + getFrameHeight());  	
+    }    
+    
+    
+    public void setResolution(Camera.Size size) 
+    {
+    	mCamera.stopPreview();
+        mCamera.setPreviewCallback(null);        
+        
+    	Camera.Parameters params = mCamera.getParameters();
+    	mFrameWidth = size.width;
+        mFrameHeight = size.height;    	
+        
+    	params.setPreviewSize(getFrameWidth(), getFrameHeight());
+    	mCamera.setParameters(params);
+    	Log.i(TAG, "setting resolution: " + getFrameWidth() + "x" + getFrameHeight());  
+    	mResolutionChanged = true;
+    	
+    	mCamera.setPreviewCallback(new PreviewCallback() {
+            public void onPreviewFrame(byte[] data, Camera camera) {
+                synchronized (AndliscaViewBase.this) {
+                    mFrame = data;
+                    AndliscaViewBase.this.notify();
+                }
+            }
+        });    	
+    	mCamera.startPreview();
+    } 
+ 
+       
+    
+    public int getFrameWidth() 
+    {
+        return mFrameWidth;
     }
 
+    public int getFrameHeight() 
+    {
+        return mFrameHeight;
+    }
+
+    public int getCanvasHeight() 
+    {
+        return mCanvasHeight;
+    }
+
+    public int getCanvasWidth() {
+        return mCanvasWidth;
+    }    
+    
+    public void toggleFPSDisplay() 
+    {
+    	if (showFPS) 
+    		showFPS = false;
+    	else
+    		showFPS = true;
+    }   
+    
+    public boolean showsFPS() {
+    	return showFPS;
+    } 
+    
+    public void showsFPS(boolean state) 
+    {
+    	showFPS = state;
+    }            
+    
+    public boolean hasMultipleCameras() 
+    {
+    	return mHasMultipleCameras;
+    }
+    
+    public boolean isFlashOn() {
+    	return mFlashIsOn;
+    }
+
+	public void toggleFlash() {
+		Camera.Parameters params = mCamera.getParameters();
+    	if (mFlashIsOn) {
+    		mFlashIsOn = false;
+    		params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+    	} else {
+    		mFlashIsOn = true;
+    		params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+    	}  
+    	mCamera.setParameters(params);
+	}
 }

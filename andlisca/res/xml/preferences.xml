@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+       
+    <ListPreference 
+    	android:enabled="false" 
+    	android:dialogTitle="@string/choose_camera" 
+    	android:key="camera_id" 
+    	android:summary="Switch between front and back facing camera" 
+    	android:title="@string/choose_camera" android:shouldDisableView="true">
+    </ListPreference>    
+    
+    <ListPreference     	
+    	android:entries="@array/resolutions" 
+    	android:entryValues="@array/resolutions_values" 
+    	android:dialogTitle="@string/choose_resolution"     	
+    	android:summary="Change camera resolution" 
+    	android:key="cam0_resolution_id" 
+    	android:title="Camera resolution" 
+    	android:shouldDisableView="true" android:enabled="true"> 
+    </ListPreference>   
+    
+    <ListPreference     	
+    	android:entryValues="@array/resolutions_values" 
+    	android:dialogTitle="@string/choose_resolution"     	
+    	android:summary="Change camera resolution" 
+    	android:key="cam1_resolution_id" 
+    	android:title="Camera resolution" 
+    	android:shouldDisableView="true" 
+    	android:enabled="false"> 
+    </ListPreference>       
+
+    <ListPreference android:enabled="false" 
+    	android:dialogTitle="@string/focus_modes" 
+    	android:key="cam0_focus_mode_id" 
+    	android:summary="Change focus mode" 
+    	android:title="@string/focus_modes">
+    </ListPreference>
+    
+    <ListPreference android:enabled="false" 
+    	android:dialogTitle="@string/focus_modes" 
+    	android:key="cam1_focus_mode_id" 
+    	android:summary="Change focus mode" 
+    	android:title="@string/focus_modes">
+    </ListPreference>
+    
+    <ListPreference 
+        android:title="Slit size"
+        android:summary="Width of the slit (line height) used for sampling the images."    
+    	android:entries="@array/slit_sizes" 
+    	android:entryValues="@array/slit_sizes_values" 
+    	android:dialogTitle="Slit size" 
+    	android:key="slit_size">
+    </ListPreference>    
+    
+    <ListPreference 
+        android:title="@string/max_buffer_width"
+        android:summary="Maximum width of buffered scan image before it gets cleared"  
+    	android:entries="@array/max_buffer_sizes" 
+    	android:entryValues="@array/max_buffer_sizes_values"  
+    	android:key="max_buffer_sizw">
+    </ListPreference>        
+
+<!-- 
+	<com.mash.gui.SeekBarPreference android:key="max_buffer_width"
+        android:title="@string/max_buffer_width"
+        android:summary="Maximum width of buffered scan image before it gets cleared (Be aware: 0 means no limit!)"
+        android:dialogMessage="@string/max_buffer_width"
+        android:defaultValue="1024"
+        android:text=" pixel"
+        android:max="10240"
+    />    
+        
+
+
+	<com.mash.gui.SeekBarPreference android:key="max_buffer_width"
+        android:title="@string/max_buffer_width"
+        android:summary="Maximum width of buffered scan image before it gets cleared (Be aware: 0 means no limit!)"
+        android:dialogMessage="@string/max_buffer_width"
+        android:defaultValue="1024"
+        android:text=" pixel"
+        android:max="10240"
+    />
+
+	<com.mash.gui.SeekBarPreference android:key="line_size"
+        android:title="Slit size"
+        android:summary="Width of the slit (line height) used for sampling the images."
+        android:dialogMessage="slit size"
+        android:defaultValue="1"
+        android:text=" pixel"
+        android:max="12" 
+        />
+ -->
+ 
+    <CheckBoxPreference android:key="autosave" 
+    	android:disableDependentsState="false" 
+    	android:defaultValue="false" 
+    	android:title="Autosave" 
+    	android:summary="Automatically save images when buffered image is full.">     	
+    </CheckBoxPreference>
+    	        
+    <CheckBoxPreference android:key="show_fps" 
+    	android:disableDependentsState="false" 
+    	android:defaultValue="false" 
+    	android:title="@string/show_fps" 
+    	android:summary="Display framerate (debug)">     	
+    </CheckBoxPreference>
+    
+    <PreferenceScreen 
+    	android:enabled="false"
+    	android:title="More Camera Preferences" 
+    	xmlns:android="http://schemas.android.com/apk/res/android">
+    	
+    	<ListPreference android:shouldDisableView="true" 
+    		android:selectable="false" 
+    		android:title="White Balance" 
+    		android:key="wb" 
+    		android:enabled="false">
+    	</ListPreference>
+    	
+        <ListPreference 
+        	android:dialogTitle="Exposure compensation" 
+        	android:title="Exposure compensation" 
+        	android:key="exp" 
+        	android:enabled="false">
+        </ListPreference>
+        
+        <ListPreference 
+        	android:title="Color effects" 
+        	android:enabled="false" 
+        	android:key="color_effects">
+        </ListPreference>
+        
+    </PreferenceScreen>
+    
+    
+
+    
+</PreferenceScreen>

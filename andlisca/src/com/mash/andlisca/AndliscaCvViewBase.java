@@ -5,6 +5,9 @@ import java.util.List;
 import org.opencv.core.Size;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.highgui.Highgui;
+
+import com.mash.tools.FpsMeter;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -38,8 +41,10 @@ public abstract class AndliscaCvViewBase extends SurfaceView implements SurfaceH
     }    
 
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
-        Log.i(TAG, "surfaceCreated");
-        synchronized (this) {
+    	if (Log.isLoggable(TAG, Log.INFO))
+    		Log.i(TAG, "surfaceCreated");
+        
+    	synchronized (this) {
             if (mCvCamera != null && mCvCamera.isOpened()) {
                 Log.i(TAG, "before mCvCamera.getSupportedPreviewSizes()");
                 List<Size> sizes = mCvCamera.getSupportedPreviewSizes();
@@ -66,8 +71,10 @@ public abstract class AndliscaCvViewBase extends SurfaceView implements SurfaceH
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.i(TAG, "surfaceCreated");
-        mCvCamera = new VideoCapture(Highgui.CV_CAP_ANDROID);
+    	if (Log.isLoggable(TAG, Log.INFO))
+    		Log.i(TAG, "surfaceCreated");
+        
+    	mCvCamera = new VideoCapture(Highgui.CV_CAP_ANDROID);
         if (mCvCamera.isOpened()) {
             (new Thread(this)).start();
         } else {
@@ -78,7 +85,8 @@ public abstract class AndliscaCvViewBase extends SurfaceView implements SurfaceH
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.i(TAG, "surfaceDestroyed");
+    	if (Log.isLoggable(TAG, Log.INFO))
+    		Log.i(TAG, "surfaceDestroyed");
         if (mCvCamera != null) {
             synchronized (this) {
                 mCvCamera.release();
@@ -90,7 +98,8 @@ public abstract class AndliscaCvViewBase extends SurfaceView implements SurfaceH
     protected abstract Bitmap processFrame(VideoCapture capture);
 
     public void run() {
-        Log.i(TAG, "Starting processing thread");
+    	if (Log.isLoggable(TAG, Log.INFO))
+    		Log.i(TAG, "Starting processing thread");
         mFps.init();
 
         while (true) {
