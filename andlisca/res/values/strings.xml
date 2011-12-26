@@ -7,6 +7,10 @@
     <string name="focus_modes">Focus modes</string>
     <string name="choose_resolution">Choose resolution</string>
     <string name="max_buffer_width">Maximum buffer width</string>
+    <string name="fliph">Flip horizontal</string>
+    <string name="flipv">Flip vertical</string>
+	<string name="info">Andlisca is an application for slitscan/linescan photography.
+		This is the initial beta release.</string>     
     <string-array name="resolutions">
     </string-array>
     <string-array name="resolutions_values">

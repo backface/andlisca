@@ -60,7 +60,10 @@ public class AndliscaPreferences extends PreferenceActivity implements OnSharedP
         	cam_focus_modes[0].setEntries(focus_modes); 
         	cam_focus_modes[0].setEntryValues(focus_modes_values);
         	cam_focus_modes[0].setDefaultValue("0");
-        	cam_focus_modes[0].setEnabled(true);
+        	if (cam_focus_modes[0].getEntries().length > 1)
+        		cam_focus_modes[0].setEnabled(true);
+        	else 
+        		cam_focus_modes[0].setEnabled(false);
         	
         	cam_id = (ListPreference) findPreference("camera_id");   
         	
@@ -101,7 +104,12 @@ public class AndliscaPreferences extends PreferenceActivity implements OnSharedP
             	cam_focus_modes[1].setEntries(focus_modes); 
             	cam_focus_modes[1].setEntryValues(focus_modes_values);
             	cam_focus_modes[1].setDefaultValue("-1");
-            	cam_focus_modes[1].setEnabled(true);            	
+            	cam_focus_modes[1].setEnabled(true); 
+            	
+            	if (cam_focus_modes[1].getEntries().length > 1)
+            		cam_focus_modes[1].setEnabled(true);
+            	else 
+            		cam_focus_modes[1].setEnabled(false);            	
             	
             	if (active_camera != 1)  {
             		getPreferenceScreen().removePreference(cam_resolutions[1]);	        		

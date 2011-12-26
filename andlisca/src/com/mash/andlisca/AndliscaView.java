@@ -27,6 +27,8 @@ class AndliscaView extends AndliscaViewBase implements OnSharedPreferenceChangeL
     private int cLine=0;
     private int mRows=0;
     private int mLineHeight=1;
+    private boolean flipH = false;
+    private boolean flipV = false;    
     public boolean mAutosave;
     private int	maxBufferSize = 4096;  
     SharedPreferences preferences; 
@@ -52,7 +54,10 @@ class AndliscaView extends AndliscaViewBase implements OnSharedPreferenceChangeL
         setMaxBufferSize(Integer.valueOf(preferences.getString("max_buffer_size", "720")));
         setAutoSave(preferences.getBoolean("autosave", false));  
         setFocusModeById(Integer.valueOf(preferences.getString("cam" + mCameraId + "_focus_mode_id", "0")));  
-    	
+        setFlipV(preferences.getBoolean("flipv", false));
+        setFlipH(preferences.getBoolean("fliph", false));
+        AndliscaActivity.setChangeFocusButton(getFocusMode());
+        
         synchronized (this) {
             // initialize Mats before usage
             mYuv = new Mat(getFrameHeight() + getFrameHeight() / 2, getFrameWidth(), CvType.CV_8UC1);
@@ -77,6 +82,16 @@ class AndliscaView extends AndliscaViewBase implements OnSharedPreferenceChangeL
         
         mYuv.put(0, 0, data);
         Imgproc.cvtColor(mYuv, mRgba, Imgproc.COLOR_YUV420sp2RGB, 4);
+        
+        if (isFrontCamera())
+        	Core.flip(mRgba.clone(), mRgba, 1);
+        
+    	if (flipV && flipH)
+    		Core.flip(mRgba.clone(), mRgba, -1);
+    	else if (flipV)
+    		Core.flip(mRgba.clone(), mRgba, 1);
+    	else if (flipH)
+    		Core.flip(mRgba.clone(), mRgba, 0);        
 
         for(int i=0; i<mLineHeight; i++) {
         	mScanImage.push_back(mRgba.row(getFrameHeight()/2-mLineHeight/2+i));        	
@@ -102,8 +117,7 @@ class AndliscaView extends AndliscaViewBase implements OnSharedPreferenceChangeL
        		new Scalar(255,0,0,255),
        		1);                    
         
-        if (isFrontCamera())
-        	Core.flip(mRgba.clone(), mRgba, 1);
+
         
         Bitmap bmp = Bitmap.createBitmap(
         		getFrameWidth(), 
@@ -239,6 +253,36 @@ class AndliscaView extends AndliscaViewBase implements OnSharedPreferenceChangeL
        	cLine = 0;
        	if (Log.isLoggable(TAG, Log.INFO)) Log.i(TAG, "cleared scanImage!");   
     }
+    
+	public void setFlipH(boolean state) {
+    	flipH = state;		
+	}	
+	
+	public void setFlipV(boolean state) {
+    	flipV = state;		
+	}		    
+    
+	public void toggleFlipH() {
+    	if (flipH) 
+    		flipH = false;
+    	else
+    		flipH = true;			
+	}	
+	
+	public void toggleFlipV() {
+    	if (flipH) 
+    		flipH = false;
+    	else
+    		flipH = true;			
+	}		
+
+	public boolean isFlipV() {
+		return flipV;		
+	}
+
+	public boolean isFlipH() {
+		return flipH;		
+	}    
     
     public void setLineHeight(int s) {
     	mLineHeight = s;

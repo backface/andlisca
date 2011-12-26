@@ -40,11 +40,16 @@ public abstract class AndliscaViewBase
 
     protected int            	mResolutionId=-1;
     protected int            	mCameraId=0;
+    protected int            	mFocusModeId=0;
+    protected int            	mWhiteBalanceId=0;
     
     private List<String>		mFocusModes;
     private List<Camera.Size> 	mResolutions;
     private Camera.Size[][]		mAllResolutions;
     private String[][] 			mAllFocusmodes;
+    
+    //private String[] supportedFocusModes = {"auto","macro","infinity","fixed"};
+    //private String[] supportedWhiteBalanceModes = {"auto","cloudy","indoor","fixed"};    
     
     protected static boolean 	mResolutionChanged=false;
     private boolean 			mHasMultipleCameras = false;
@@ -232,9 +237,11 @@ public abstract class AndliscaViewBase
         Log.i(TAG, "opening camera:" + id);
     	if (Log.isLoggable(TAG, Log.INFO)) {
         	Log.i(TAG,"  enabled focus mode:" + mCamera.getParameters().getFocusMode());
+        	Log.i(TAG,"  has autofocus: " + hasAutofocus());
             Log.i(TAG,"  available focus modes: " + mCamera.getParameters().getSupportedFocusModes()); 
         	Log.i(TAG,"  supported preview formats: " + mCamera.getParameters().getSupportedPreviewFormats());    	
-        	Log.i(TAG,"  current preview format :" + mCamera.getParameters().getPreviewFormat());    
+        	Log.i(TAG,"  current preview format :" + mCamera.getParameters().getPreviewFormat());  
+        	
         	if (Build.VERSION.SDK_INT>=9) {
         		Log.i(TAG,"  supported preview fps range:" + mCamera.getParameters().getSupportedPreviewFpsRange());        		        		
         	}
@@ -365,7 +372,7 @@ public abstract class AndliscaViewBase
     	String[] resArray = new String[mAllFocusmodes[id].length];
     	int i = 0;
    		for (String mode : mAllFocusmodes[id]) {
-    		resArray[i] = ""+i;
+    		resArray[i] = "" +i;
    			i++;
     	}
    		return resArray;
@@ -377,6 +384,7 @@ public abstract class AndliscaViewBase
     	if (mFocusModes.contains(mode)) {
     		params.setFocusMode(mode);
     		mCamera.setParameters(params);
+    		AndliscaActivity.setChangeFocusButton(mode);
     		if (Log.isLoggable(TAG, Log.INFO)) 
     			Log.i(TAG, "set Focus Mode to " + mode);
     		return true;
@@ -390,12 +398,46 @@ public abstract class AndliscaViewBase
     public boolean setFocusModeById(int id) 
     {
     	Camera.Parameters params = mCamera.getParameters();
-   		params.setFocusMode(mFocusModes.get(id));
-   		mCamera.setParameters(params);
-   		if (Log.isLoggable(TAG, Log.INFO)) 
-   			Log.i(TAG, "set Focus Mode to " + id);
+   		if (mFocusModes.size() > 0 && id >= 0) {
+   			if (Log.isLoggable(TAG, Log.INFO)) 
+   				Log.i(TAG, "set Focus Mode to " + id);
+   			
+   			params.setFocusMode(mFocusModes.get(id));
+   			mCamera.setParameters(params);
+   			AndliscaActivity.setChangeFocusButton(mFocusModes.get(id));
+    	}
    		return true;
-    }    
+    }   
+    
+    public boolean cycleFocusMode() 
+    {
+    	Camera.Parameters params = mCamera.getParameters();
+    	
+    	Log.i(TAG, "cycle Focus Mode to " + getFocusModes().size());
+   		
+    	if (getFocusModes().size() > 1) {
+   			int pos = mFocusModes.indexOf(getFocusMode()) + 1;  			
+   			if (pos > getFocusModes().size()-1)
+   				pos = 0;
+   			
+   			params.setFocusMode(mFocusModes.get(pos));
+   			
+   			if (Log.isLoggable(TAG, Log.INFO)) 
+   				Log.i(TAG, "set Focus Mode to " + mFocusModes.get(pos));
+   			
+   			params.setFocusMode(mFocusModes.get(pos));
+   			mCamera.setParameters(params);
+   			AndliscaActivity.setChangeFocusButton(mFocusModes.get(pos));
+    	}
+   		return true;
+    }      
+
+    public void toggleFocusModes(int i) 
+    {
+    	if (mAllFocusmodes[i].length > 1) {
+  		
+    	}
+    }
     
 	public void AutofocusNow() 
 	{
@@ -403,6 +445,11 @@ public abstract class AndliscaViewBase
 			setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO); 
 		mCamera.autoFocus(null);
 	}    
+	
+	public boolean hasAutofocus() 
+	{
+		return mFocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO);
+	} 	
     
     public List<Camera.Size> getResolutions() 
     {

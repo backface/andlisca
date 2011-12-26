@@ -3,7 +3,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-  <!--  android:background="#DD272727">-->
+  <!--  android:background="#FF272727">-->
   
     <RelativeLayout 
         android:id="@+id/InnerTopLayout"
@@ -14,7 +14,7 @@
         android:paddingRight="2dp"
         android:paddingTop="2dp"
         android:paddingBottom="2dp"
-        android:background="#DD272727"     
+        android:background="#FF272727"     
         >
 
 	     <ImageButton android:id="@+id/btn_record" 
@@ -26,7 +26,7 @@
 	          android:layout_alignParentBottom="true"
 	          android:scaleType="fitXY"
 	          android:onClick="on_autosave"
-	          android:layout_marginTop="15dp" android:layout_marginBottom="15dp"/>
+	          android:layout_marginTop="40dp" android:layout_marginBottom="15dp"/>
 	          
 
 	     <ImageButton android:id="@+id/btn_af_now" 
@@ -37,19 +37,20 @@
 	          android:padding="0dp"
 	          android:background="@android:color/transparent"
 	          android:layout_above="@+id/btn_record"
-	          android:onClick="on_btn_af_clicked" android:layout_marginTop="2dp" android:layout_marginBottom="15dp"/>    
+	          android:onClick="on_btn_af_clicked" android:layout_marginTop="5dp" android:layout_marginBottom="25dp"/>    
           
 	     <ImageButton android:id="@+id/btn_focus" 
-	    	  android:src="@drawable/autofocus_on"
+	    	  android:src="@drawable/focus_auto"
 	          android:layout_width="32dp"
 	          android:layout_height="32dp"
 	          android:scaleType="fitXY"
 	          android:padding="0dp"
 	          android:background="@android:color/transparent"
 	          android:layout_above="@+id/btn_af_now"
+	          android:onClick="on_focus_mode_clicked"
 	          android:layout_marginTop="15dp" android:layout_marginBottom="2dp"/>    
 	          
-	     <ImageButton android:id="@+id/btn_wb" 
+<!--      <ImageButton android:id="@+id/btn_wb" 
 	    	  android:src="@drawable/white_balance"
 	          android:layout_width="32dp"
 	          android:layout_height="32dp"
@@ -58,7 +59,7 @@
 	          android:layout_above="@+id/btn_focus"
 	          android:scaleType="fitXY"
 	          android:layout_marginTop="15dp" android:layout_marginBottom="15dp" 
-	          />
+	          /> -->	
 	          
 	     <ImageButton android:id="@+id/btn_flash" 
 	    	  android:src="@drawable/btn_flash"
@@ -73,7 +74,8 @@
 	</RelativeLayout>	
 	
 
-    <RelativeLayout 
+
+	<RelativeLayout 
         android:id="@+id/InnerTextLayout"
         android:layout_toRightOf="@+id/InnerTopLayout"
         android:layout_width="match_parent"
@@ -84,7 +86,7 @@
         android:layout_marginBottom="12dp"
         android:layout_alignParentBottom="true"
         android:paddingBottom="2dp">        
-	<TextView  
+<!--	<TextView  
 		 android:id="@+id/textView1"
 		 android:layout_width="120dp" 
 		 android:layout_height="120dp"
@@ -93,7 +95,9 @@
 		 android:textSize="12dp"
 		 >
    </TextView>
+ -->   
    </RelativeLayout>
+
    
     <FrameLayout
         android:id="@+id/InnerFrameLayout"
@@ -113,7 +117,7 @@
         android:paddingRight="2dp"
         android:paddingTop="2dp"
         android:paddingBottom="2dp"
-        android:background="#DD272727">
+        android:background="#FF272727">
 
 	     <ImageButton android:id="@+id/btn_save" 
 	    	  android:src="@android:drawable/ic_menu_save"

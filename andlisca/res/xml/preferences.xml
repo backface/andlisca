@@ -55,10 +55,10 @@
     
     <ListPreference 
         android:title="@string/max_buffer_width"
-        android:summary="Maximum width of buffered scan image before it gets cleared"  
+        android:summary="Maximum width of buffered scan image before it gets cleared (and/or saved)"  
     	android:entries="@array/max_buffer_sizes" 
     	android:entryValues="@array/max_buffer_sizes_values"  
-    	android:key="max_buffer_sizw">
+    	android:key="max_buffer_size">
     </ListPreference>        
 
 <!-- 
@@ -98,6 +98,20 @@
     	android:title="Autosave" 
     	android:summary="Automatically save images when buffered image is full.">     	
     </CheckBoxPreference>
+    
+    <CheckBoxPreference android:key="fliph" 
+    	android:disableDependentsState="false" 
+    	android:defaultValue="false" 
+    	android:title="@string/fliph" 
+    	android:summary="Flip camera image horizontal">     	
+    </CheckBoxPreference>
+    
+    <CheckBoxPreference android:key="flipv" 
+    	android:disableDependentsState="false" 
+    	android:defaultValue="false" 
+    	android:title="@string/flipv" 
+    	android:summary="Flip camera image vertical">     	
+    </CheckBoxPreference>
     	        
     <CheckBoxPreference android:key="show_fps" 
     	android:disableDependentsState="false" 
@@ -108,7 +122,8 @@
     
     <PreferenceScreen 
     	android:enabled="false"
-    	android:title="More Camera Preferences" 
+    	android:title="More Camera Preferences"
+    	android:summary="coming soon ..."> 
     	xmlns:android="http://schemas.android.com/apk/res/android">
     	
     	<ListPreference android:shouldDisableView="true" 
