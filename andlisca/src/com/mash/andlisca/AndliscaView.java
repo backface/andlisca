@@ -51,7 +51,7 @@ class AndliscaView extends AndliscaViewBase implements OnSharedPreferenceChangeL
 
         showsFPS(preferences.getBoolean("show_fps", false));             
         setLineHeight(Integer.valueOf(preferences.getString("slit_size", "1")));  
-        setMaxBufferSize(Integer.valueOf(preferences.getString("max_buffer_size", "720")));
+        setMaxBufferSize(Integer.valueOf(preferences.getString("max_buffer_size", "1024")));
         setAutoSave(preferences.getBoolean("autosave", false));  
         setFocusModeById(Integer.valueOf(preferences.getString("cam" + mCameraId + "_focus_mode_id", "0")));  
         setFlipV(preferences.getBoolean("flipv", false));

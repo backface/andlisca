@@ -26,7 +26,7 @@ import android.widget.Toast;
 
 public class AndliscaActivity extends Activity {
     private static final String TAG = "Andlisca::Activity";
-    
+
     private AndliscaView	mView;  
     private static View 			btnView;
 
@@ -269,7 +269,7 @@ public class AndliscaActivity extends Activity {
         	builder.setMessage(R.string.info)
             	   .setTitle(R.string.app_name)
         	       .setCancelable(true)
-        	       .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+        	       .setNeutralButton("OK", new DialogInterface.OnClickListener() {
         	           public void onClick(DialogInterface dialog, int id) {
         	                dialog.cancel();
         	           }
